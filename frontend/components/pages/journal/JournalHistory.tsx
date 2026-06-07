@@ -13,7 +13,11 @@ export function JournalHistory({ entries }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (entries.length === 0) {
-    return <p className="text-muted-foreground text-sm text-center py-8">No previous entries.</p>
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        No previous entries.
+      </p>
+    )
   }
 
   return (
@@ -30,18 +34,26 @@ export function JournalHistory({ entries }: Props) {
             className="cursor-pointer"
             onClick={() => setExpandedId(expanded ? null : entry.id)}
           >
-            <CardHeader className="pb-1 pt-3 px-4">
+            <CardHeader className="">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{entry.date}</span>
+                <span className="text-xs text-muted-foreground">
+                  {entry.date}
+                </span>
                 <div className="flex items-center gap-2">
-                  {entry.audio_url && <Volume2 size={14} className="text-muted-foreground" />}
-                  {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {entry.audio_url && (
+                    <Volume2 size={14} className="text-muted-foreground" />
+                  )}
+                  {expanded ? (
+                    <ChevronUp size={14} />
+                  ) : (
+                    <ChevronDown size={14} />
+                  )}
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="px-4 pb-3">
+            <CardContent className="">
               {!expanded && (
-                <p className="text-sm line-clamp-2">
+                <p className="line-clamp-2 text-sm">
                   {preview}
                   {isLong && !expanded && "…"}
                 </p>
@@ -49,10 +61,17 @@ export function JournalHistory({ entries }: Props) {
               {expanded && (
                 <div className="flex flex-col gap-3">
                   {entry.text_content && (
-                    <p className="text-sm whitespace-pre-wrap">{entry.text_content}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {entry.text_content}
+                    </p>
                   )}
                   {entry.audio_url && (
-                    <audio controls src={entry.audio_url} className="w-full h-10" />
+                    <audio
+                      controls
+                      src={entry.audio_url}
+                      className="h-10 w-full"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   )}
                 </div>
               )}
