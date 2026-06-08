@@ -18,6 +18,6 @@ export const useJournalDraftStore = create<JournalDraftState>()(
       setAudioUrl: (audioUrl) => set({ audioUrl }),
       clearDraft: () => set({ text: "", audioUrl: null }),
     }),
-    { name: "journal-draft" },
-  ),
+    { name: "journal-draft" }
+  )
 )

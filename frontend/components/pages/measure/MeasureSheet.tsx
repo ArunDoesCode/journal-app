@@ -20,7 +20,11 @@ import {
 import { useMeasureStore } from "@/lib/store/measureStore"
 import { insertMeasurement } from "@/lib/api/measurements/measurements"
 import { getMeasurements } from "@/lib/api/measurements/measurements"
-import { MEASUREMENT_FIELDS, type MeasurementField } from "@/types"
+import {
+  MEASUREMENT_FIELDS,
+  type MeasurementField,
+  type MeasurementValues,
+} from "@/types"
 
 const LABELS: Record<MeasurementField, string> = {
   neck: "Neck",
@@ -67,11 +71,15 @@ export function MeasureSheet() {
   const handleSubmit = () => {
     startTransition(async () => {
       const today = new Date().toISOString().split("T")[0]
-      const values = Object.fromEntries(
-        MEASUREMENT_FIELDS.map((f) => [f, stepValues[f] !== "" ? Number(stepValues[f]) : null]),
+      const values = MEASUREMENT_FIELDS.reduce<MeasurementValues>(
+        (acc, field) => {
+          acc[field] = stepValues[field] !== "" ? Number(stepValues[field]) : null
+          return acc
+        },
+        {} as MeasurementValues
       )
 
-      const res = await insertMeasurement({ date: today, ...values } as Parameters<typeof insertMeasurement>[0])
+      const res = await insertMeasurement({ date: today, ...values })
       if (res.success) {
         toast.success("Measurements saved")
         resetSheet()

@@ -19,7 +19,7 @@ export default async function ProtectedLayout({
 
   return (
     <Providers>
-      <main className="pb-20">{children}</main>
+      <main>{children}</main>
       <BottomNav />
     </Providers>
   )

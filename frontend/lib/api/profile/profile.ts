@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { ApiResponse, Profile } from "@/types"
+import type { ApiResponse, Profile, ProfileUpdateInput } from "@/types"
 
 export async function getProfile(): Promise<ApiResponse<Profile>> {
   const supabase = createClient()
@@ -18,11 +18,21 @@ export async function getProfile(): Promise<ApiResponse<Profile>> {
     return { success: false, message: error.message, errorCode: error.code }
   }
 
-  return { success: true, data: data ?? { id: user.id, height_cm: null, weight_kg: null, created_at: "" } }
+  return {
+    success: true,
+    data: data ?? {
+      id: user.id,
+      height_cm: null,
+      full_name: null,
+      avatar_url: null,
+      weight_check_weeks: 1,
+      created_at: "",
+    },
+  }
 }
 
 export async function upsertProfile(
-  values: Pick<Profile, "height_cm" | "weight_kg">,
+  values: ProfileUpdateInput
 ): Promise<ApiResponse<Profile>> {
   const supabase = createClient()
   const {
@@ -36,6 +46,7 @@ export async function upsertProfile(
     .select()
     .single()
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data }
 }
