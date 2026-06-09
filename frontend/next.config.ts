@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
     "*.trycloudflare.com",
     "obsession-clad-dwindling.ngrok-free.dev",
   ],
-  images: {
+    images: {
     remotePatterns: [
       {
         protocol: "https",
@@ -47,6 +47,4 @@ const nextConfig: NextConfig = {
   turbopack: {},
 }
 
-const isDevelopment = process.env.NODE_ENV === "development"
-
-export default isDevelopment ? nextConfig : withPWA(nextConfig)
+export default withPWA({ ...nextConfig, turbopack: {},})

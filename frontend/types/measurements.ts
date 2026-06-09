@@ -35,3 +35,10 @@ export interface UpsertMeasurementInput extends MeasurementValues {
   date: string
   weight_kg?: number | null
 }
+
+export type MeasurementPrDatesByMetric = Record<MeasurementField, string[]>
+
+export interface MeasurementPrSummary {
+  prDatesByMetric: MeasurementPrDatesByMetric
+  prPartsByDate: Record<string, MeasurementField[]>
+}

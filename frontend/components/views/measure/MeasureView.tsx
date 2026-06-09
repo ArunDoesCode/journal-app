@@ -1,35 +1,19 @@
 "use client"
 
 import { useEffect, useMemo, useState, useTransition } from "react"
-import dynamic from "next/dynamic"
 import { toast } from "sonner"
 import { getMeasurements } from "@/lib/api/measurements/measurements"
 import { getProfile } from "@/lib/api/profile/profile"
 import { useMeasureStore } from "@/lib/store/measureStore"
 import type { ChartRange, Measurement } from "@/types"
-import { Skeleton } from "@/components/ui/skeleton"
+import { buildMeasurementPrSummary } from "@/lib/utils/measurement-pr"
 import { Button } from "@/components/ui/button"
 import ChartRangeSelector from "@/components/pages/measure/ChartRangeSelector"
-
-const MetricSelector = dynamic(
-  () => import("@/components/pages/measure/MetricSelector").then((module) => module.MetricSelector)
-)
-const MeasurementChart = dynamic(
-  () => import("@/components/pages/measure/MeasurementChart").then((module) => module.MeasurementChart),
-  {
-    loading: () => <Skeleton className="h-48 w-full rounded-xl" />,
-  }
-)
-const WeightChart = dynamic(
-  () => import("@/components/pages/measure/WeightChart"),
-  {
-    loading: () => <Skeleton className="h-48 w-full rounded-xl" />,
-  }
-)
-const MeasureSheet = dynamic(
-  () => import("@/components/pages/measure/MeasureSheet").then((module) => module.MeasureSheet)
-)
-const WeightSheet = dynamic(() => import("@/components/pages/measure/WeightSheet"))
+import { MetricSelector } from "@/components/pages/measure/MetricSelector"
+import { MeasurementChart } from "@/components/pages/measure/MeasurementChart"
+import { MeasureSheet } from "@/components/pages/measure/MeasureSheet"
+import WeightSheet from "@/components/pages/measure/WeightSheet"
+import WeightChart from "@/components/pages/measure/WeightChart"
 
 function addDays(date: string, days: number): Date {
   const target = new Date(`${date}T00:00:00`)
@@ -45,19 +29,16 @@ function formatDate(date: Date): string {
   })
 }
 
-const RANGE_DAYS: Record<Exclude<ChartRange, "all_time">, number> = {
+const RANGE_DAYS: Record<ChartRange, number> = {
   week: 7,
   month: 30,
+  all_time: 365,
 }
 
 function filterMeasurementsByRange(
   measurements: Measurement[],
   range: ChartRange
 ): Measurement[] {
-  if (range === "all_time") {
-    return measurements
-  }
-
   const days = RANGE_DAYS[range]
   const startDate = new Date()
   startDate.setHours(0, 0, 0, 0)
@@ -71,13 +52,13 @@ function filterMeasurementsByRange(
 
 export function MeasureView() {
   const [isPending, startTransition] = useTransition()
+  const [measurementSheetOpen, setMeasurementSheetOpen] = useState(false)
+  const [weightSheetOpen, setWeightSheetOpen] = useState(false)
   const {
     measurements,
     selectedMetric,
     chartRange,
     setChartRange,
-    openSheet,
-    openWeightSheet,
     setMeasurements,
   } = useMeasureStore()
 
@@ -122,6 +103,11 @@ export function MeasureView() {
   }, [nextWeightDate])
 
   const nextWeightDateLabel = nextWeightDate ? formatDate(nextWeightDate) : null
+  const prSummary = useMemo(
+    () => buildMeasurementPrSummary(measurements),
+    [measurements]
+  )
+  const metricPrDates = prSummary.prDatesByMetric[selectedMetric]
   const filteredMeasurements = useMemo(
     () => filterMeasurementsByRange(measurements, chartRange),
     [measurements, chartRange]
@@ -133,13 +119,17 @@ export function MeasureView() {
       <div className="flex flex-col gap-6">
         <div className="flex w-full justify-between">
           <ChartRangeSelector value={chartRange} onChange={setChartRange} />
-          <Button onClick={openSheet} className="rounded-full shadow-lg">
+          <Button
+            onClick={() => setMeasurementSheetOpen(true)}
+            className="rounded-full shadow-lg"
+          >
             Log Measurement
           </Button>
         </div>
         <MeasurementChart
           measurements={filteredMeasurements}
           selectedMetric={selectedMetric}
+          prDates={metricPrDates}
         />
         <MetricSelector />
         <h1 className="pl-2 font-bold">Weight </h1>
@@ -152,7 +142,7 @@ export function MeasureView() {
               toast.error(`Next weight entry available on ${nextWeightDateLabel}`)
               return
             }
-            openWeightSheet()
+            setWeightSheetOpen(true)
           }}
           disabled={isPending}
           className="rounded-full shadow-lg"
@@ -161,8 +151,13 @@ export function MeasureView() {
         </Button>
       </div>
 
-      <MeasureSheet />
+      <MeasureSheet
+        open={measurementSheetOpen}
+        onOpenChange={setMeasurementSheetOpen}
+      />
       <WeightSheet
+        open={weightSheetOpen}
+        onOpenChange={setWeightSheetOpen}
         canLogWeight={canLogWeight}
         nextWeightDate={nextWeightDateLabel}
       />

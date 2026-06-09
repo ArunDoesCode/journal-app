@@ -12,7 +12,7 @@ import { CHART_RANGES, type ChartRange } from "@/types"
 const LABELS: Record<ChartRange, string> = {
   week: "Week",
   month: "Month",
-  all_time: "All time",
+  all_time: "Year",
 }
 
 interface ChartRangeSelectorProps {

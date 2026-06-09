@@ -1,24 +1,39 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { Pencil } from "lucide-react"
 import { getJournalEntries, getTodayEntry } from "@/lib/api/journal/journal"
+import { getMeasurements } from "@/lib/api/measurements/measurements"
+import {
+  buildMeasurementPrSummary,
+  getPrPartsForDate,
+} from "@/lib/utils/measurement-pr"
 import { JournalComposer } from "@/components/pages/journal/JournalComposer"
 import { JournalHistory } from "@/components/pages/journal/JournalHistory"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { JournalEntry } from "@/types"
+import type { JournalEntry, Measurement } from "@/types"
 
 export function JournalView() {
+  const [isPending, startTransition] = useTransition()
   const [todayEntry, setTodayEntry] = useState<JournalEntry | null | undefined>(undefined)
   const [entries, setEntries] = useState<JournalEntry[] | null>(null)
+  const [measurements, setMeasurements] = useState<Measurement[] | null>(null)
   const [editing, setEditing] = useState(false)
 
   const fetchAll = useCallback(() => {
-    getTodayEntry().then((res) => setTodayEntry(res.success ? res.data : null))
-    getJournalEntries().then((res) => setEntries(res.success ? res.data : []))
-  }, [])
+    startTransition(async () => {
+      const [todayRes, entriesRes, measurementsRes] = await Promise.all([
+        getTodayEntry(),
+        getJournalEntries(),
+        getMeasurements(),
+      ])
+      setTodayEntry(todayRes.success ? todayRes.data : null)
+      setEntries(entriesRes.success ? entriesRes.data : [])
+      setMeasurements(measurementsRes.success ? measurementsRes.data : [])
+    })
+  }, [startTransition])
 
   useEffect(() => {
     fetchAll()
@@ -29,6 +44,14 @@ export function JournalView() {
     fetchAll()
   }, [fetchAll])
 
+  const today = useMemo(() => new Date().toISOString().split("T")[0], [])
+  const prSummary = useMemo(
+    () => buildMeasurementPrSummary(measurements ?? []),
+    [measurements]
+  )
+  const todayPrParts = getPrPartsForDate(prSummary, today)
+  const prDateList = Object.keys(prSummary.prPartsByDate)
+  const showPrompt = !editing && todayEntry === null && todayPrParts.length > 0
   const historyEntries = entries?.filter((e) => e.date !== todayEntry?.date) ?? []
 
   return (
@@ -39,7 +62,7 @@ export function JournalView() {
         <Skeleton className="h-40 w-full rounded-xl" />
       ) : todayEntry !== null && !editing ? (
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm text-muted-foreground font-normal">
                 Today — {todayEntry.date}
@@ -65,17 +88,29 @@ export function JournalView() {
           </CardContent>
         </Card>
       ) : (
-        <JournalComposer
-          onSubmitted={handleSaved}
-          existingEntry={editing && todayEntry ? todayEntry : undefined}
-          onCancelEdit={editing ? () => setEditing(false) : undefined}
-        />
+        <div className="flex flex-col gap-3">
+          {showPrompt && (
+            <Card className="border-chart-1/50 bg-chart-1/10 p-4">
+                <p className="font-medium">🏆 Personal Best Day</p>
+                <p className="text-muted-foreground">
+                  You hit new records in{" "}
+                  {todayPrParts.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(", ")}.
+                  What is working well for you today?
+                </p>
+            </Card>
+          )}
+          <JournalComposer
+            onSubmitted={handleSaved}
+            existingEntry={editing && todayEntry ? todayEntry : undefined}
+            onCancelEdit={editing ? () => setEditing(false) : undefined}
+          />
+        </div>
       )}
 
-      {entries === null ? (
+      {entries === null || measurements === null || isPending ? (
         <Skeleton className="h-24 w-full rounded-xl" />
       ) : (
-        <JournalHistory entries={historyEntries} />
+        <JournalHistory entries={historyEntries} prDates={prDateList} />
       )}
     </div>
   )

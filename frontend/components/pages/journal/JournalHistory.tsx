@@ -7,10 +7,12 @@ import type { JournalEntry } from "@/types"
 
 interface Props {
   entries: JournalEntry[]
+  prDates?: string[]
 }
 
-export function JournalHistory({ entries }: Props) {
+export function JournalHistory({ entries, prDates = [] }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const prDateSet = new Set(prDates)
 
   if (entries.length === 0) {
     return (
@@ -36,9 +38,10 @@ export function JournalHistory({ entries }: Props) {
           >
             <CardHeader className="">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {entry.date}
-                </span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{entry.date}</span>
+                  {prDateSet.has(entry.date) && <span>🏆 PR Day</span>}
+                </div>
                 <div className="flex items-center gap-2">
                   {entry.audio_url && (
                     <Volume2 size={14} className="text-muted-foreground" />

@@ -17,18 +17,21 @@ import {
 import { useMeasureStore } from "@/lib/store/measureStore"
 
 interface WeightSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   canLogWeight: boolean
   nextWeightDate: string | null
 }
 
 export default function WeightSheet({
+  open,
+  onOpenChange,
   canLogWeight,
   nextWeightDate,
 }: WeightSheetProps) {
   const [isPending, startTransition] = useTransition()
   const [weightKg, setWeightKg] = useState("")
-  const { weightSheetOpen, closeWeightSheet, setMeasurements } =
-    useMeasureStore()
+  const { setMeasurements } = useMeasureStore()
   const isValidWeight =
     weightKg !== "" && !isNaN(Number(weightKg)) && Number(weightKg) > 0
 
@@ -51,7 +54,7 @@ export default function WeightSheet({
 
       toast.success("Weight saved")
       setWeightKg("")
-      closeWeightSheet()
+      onOpenChange(false)
 
       const refreshed = await getMeasurements()
       if (!refreshed.success) {
@@ -64,9 +67,9 @@ export default function WeightSheet({
 
   return (
     <Sheet
-      open={weightSheetOpen}
+      open={open}
       onOpenChange={(open) => {
-        if (!open) closeWeightSheet()
+        if (!open) onOpenChange(false)
       }}
     >
       <SheetContent side="bottom" className="h-auto rounded-t-2xl p-4">

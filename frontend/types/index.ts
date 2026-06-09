@@ -4,6 +4,8 @@ export type {
   ChartRange,
   Measurement,
   MeasurementField,
+  MeasurementPrDatesByMetric,
+  MeasurementPrSummary,
   MeasurementValues,
   UpsertMeasurementInput,
 } from "./measurements"

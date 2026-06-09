@@ -35,7 +35,11 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         {supabaseOrigin && (
           <>
-            <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+            <link
+              rel="preconnect"
+              href={supabaseOrigin}
+              crossOrigin="anonymous"
+            />
             <link rel="dns-prefetch" href={supabaseOrigin} />
           </>
         )}

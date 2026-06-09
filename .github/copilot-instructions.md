@@ -16,7 +16,4 @@ Boundaries: code/commits/PRs written normal.
 
 
 
-npx shadcn@latest init --preset b2D33hBND --template next
-
-
 
