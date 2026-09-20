@@ -86,7 +86,9 @@ export function MeasureView() {
   }, [setMeasurements, startTransition, setWeightCheckWeeks])
 
   const lastWeightDate = useMemo(
-    () => measurements.find((measurement) => measurement.weight_kg !== null)?.date ?? null,
+    () =>
+      measurements.find((measurement) => measurement.weight_kg !== null)
+        ?.date ?? null,
     [measurements]
   )
 
@@ -98,7 +100,11 @@ export function MeasureView() {
   const canLogWeight = useMemo(() => {
     if (!nextWeightDate) return true
     const today = new Date()
-    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    )
     return todayOnly.getTime() >= nextWeightDate.getTime()
   }, [nextWeightDate])
 
@@ -139,7 +145,9 @@ export function MeasureView() {
         <Button
           onClick={() => {
             if (!canLogWeight) {
-              toast.error(`Next weight entry available on ${nextWeightDateLabel}`)
+              toast.error(
+                `Next weight entry available on ${nextWeightDateLabel}`
+              )
               return
             }
             setWeightSheetOpen(true)

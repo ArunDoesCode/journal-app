@@ -4,7 +4,6 @@ import { useEffect } from "react"
 import { Toaster, toast } from "sonner"
 import { Analytics } from "@vercel/analytics/next"
 
-
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleOffline = () =>
@@ -18,7 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <>
       <Toaster richColors position="top-right" />
       {children}
-      <Analytics/>
+      <Analytics />
     </>
   )
 }

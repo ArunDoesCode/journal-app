@@ -1,18 +1,23 @@
 import { createClient } from "@/lib/supabase/client"
 import type { ApiResponse, JournalEntry } from "@/types"
 
-export async function getJournalEntries(): Promise<ApiResponse<JournalEntry[]>> {
+export async function getJournalEntries(): Promise<
+  ApiResponse<JournalEntry[]>
+> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("journal_entries")
     .select("*")
     .order("date", { ascending: false })
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data: data ?? [] }
 }
 
-export async function getTodayEntry(): Promise<ApiResponse<JournalEntry | null>> {
+export async function getTodayEntry(): Promise<
+  ApiResponse<JournalEntry | null>
+> {
   const supabase = createClient()
   const today = new Date().toISOString().split("T")[0]
   const { data, error } = await supabase
@@ -21,7 +26,8 @@ export async function getTodayEntry(): Promise<ApiResponse<JournalEntry | null>>
     .eq("date", today)
     .maybeSingle()
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data }
 }
 
@@ -42,13 +48,14 @@ export async function insertJournalEntry(values: {
     .select()
     .single()
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data }
 }
 
 export async function updateJournalEntry(
   id: string,
-  values: { text_content: string | null; audio_url: string | null },
+  values: { text_content: string | null; audio_url: string | null }
 ): Promise<ApiResponse<JournalEntry>> {
   const supabase = createClient()
   const { data, error } = await supabase
@@ -58,23 +65,24 @@ export async function updateJournalEntry(
     .select()
     .single()
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data }
 }
-
 
 export async function uploadAudio(
   blob: Blob,
   userId: string,
   date: string,
-  ext = "webm",
+  ext = "webm"
 ): Promise<string> {
   const supabase = createClient()
   const path = `${userId}/${date}.${ext}`
 
-  const { error } = await supabase.storage
-    .from("journal")
-    .upload(path, blob, { contentType: blob.type || "audio/webm", upsert: true })
+  const { error } = await supabase.storage.from("journal").upload(path, blob, {
+    contentType: blob.type || "audio/webm",
+    upsert: true,
+  })
 
   if (error) throw new Error(error.message)
 

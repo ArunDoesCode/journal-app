@@ -8,7 +8,8 @@ export async function getMeasurements(): Promise<ApiResponse<Measurement[]>> {
     .select("*")
     .order("date", { ascending: false })
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data: data ?? [] }
 }
 
@@ -27,7 +28,8 @@ export async function insertMeasurement(
     .select()
     .single()
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data }
 }
 
@@ -50,6 +52,7 @@ export async function insertWeight(
     .select()
     .single()
 
-  if (error) return { success: false, message: error.message, errorCode: error.code }
+  if (error)
+    return { success: false, message: error.message, errorCode: error.code }
   return { success: true, data }
 }

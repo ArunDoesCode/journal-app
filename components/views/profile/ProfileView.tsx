@@ -111,7 +111,7 @@ export function ProfileView() {
               width={48}
             />
           ) : (
-            <div className="bg-muted flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-sm font-semibold">
               {fullName.slice(0, 1).toUpperCase()}
             </div>
           )}
@@ -149,7 +149,9 @@ export function ProfileView() {
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="flex flex-col">
-                <span className="text-sm font-medium">Weight logging interval</span>
+                <span className="text-sm font-medium">
+                  Weight logging interval
+                </span>
                 <span className="text-xs text-muted-foreground">
                   {isTwoWeekInterval ? "Every 2 weeks" : "Every week"}
                 </span>

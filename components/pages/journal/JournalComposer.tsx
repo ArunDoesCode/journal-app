@@ -6,7 +6,11 @@ import { toast } from "sonner"
 import { Mic, Square } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { insertJournalEntry, updateJournalEntry, uploadAudio } from "@/lib/api/journal/journal"
+import {
+  insertJournalEntry,
+  updateJournalEntry,
+  uploadAudio,
+} from "@/lib/api/journal/journal"
 import { useJournalDraftStore } from "@/lib/store/journalDraftStore"
 import { createClient } from "@/lib/supabase/client"
 import type { JournalEntry } from "@/types"
@@ -37,14 +41,20 @@ interface Props {
   onCancelEdit?: () => void
 }
 
-export function JournalComposer({ onSubmitted, existingEntry, onCancelEdit }: Props) {
+export function JournalComposer({
+  onSubmitted,
+  existingEntry,
+  onCancelEdit,
+}: Props) {
   const router = useRouter()
   const isEditing = !!existingEntry
 
   // In edit mode use local state pre-filled with existing; in new mode use persisted draft
   const draft = useJournalDraftStore()
   const [editText, setEditText] = useState(existingEntry?.text_content ?? "")
-  const [editAudioUrl, setEditAudioUrl] = useState<string | null>(existingEntry?.audio_url ?? null)
+  const [editAudioUrl, setEditAudioUrl] = useState<string | null>(
+    existingEntry?.audio_url ?? null
+  )
 
   const text = isEditing ? editText : draft.text
   const audioUrl = isEditing ? editAudioUrl : draft.audioUrl
@@ -58,7 +68,12 @@ export function JournalComposer({ onSubmitted, existingEntry, onCancelEdit }: Pr
   const streamRef = useRef<MediaStream | null>(null)
   const extRef = useRef<string>("webm")
   const chunksRef = useRef<Blob[]>([])
-  const { seconds, start: startTimer, stop: stopTimer, format } = useRecordingTimer()
+  const {
+    seconds,
+    start: startTimer,
+    stop: stopTimer,
+    format,
+  } = useRecordingTimer()
 
   // Always release mic on unmount (covers navigate-away, cancel, etc.)
   useEffect(() => {
@@ -87,14 +102,19 @@ export function JournalComposer({ onSubmitted, existingEntry, onCancelEdit }: Pr
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      const recorder = new MediaRecorder(
+        stream,
+        mimeType ? { mimeType } : undefined
+      )
       chunksRef.current = []
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data)
       }
       recorder.onstop = async () => {
         releaseStream() // safety net in case not already released
-        const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" })
+        const blob = new Blob(chunksRef.current, {
+          type: mimeType || "audio/webm",
+        })
         if (blob.size === 0) {
           toast.error("Recording failed. Please try again.")
           return
@@ -102,7 +122,9 @@ export function JournalComposer({ onSubmitted, existingEntry, onCancelEdit }: Pr
         setUploading(true)
         try {
           const supabase = createClient()
-          const { data: { user } } = await supabase.auth.getUser()
+          const {
+            data: { user },
+          } = await supabase.auth.getUser()
           if (!user) throw new Error("Not authenticated")
           const today = new Date().toISOString().split("T")[0]
           const url = await uploadAudio(blob, user.id, today, extRef.current)
@@ -175,7 +197,9 @@ export function JournalComposer({ onSubmitted, existingEntry, onCancelEdit }: Pr
   return (
     <div className="flex flex-col gap-3">
       {isEditing && (
-        <p className="text-xs text-muted-foreground">Editing today&apos;s entry</p>
+        <p className="text-xs text-muted-foreground">
+          Editing today&apos;s entry
+        </p>
       )}
 
       <Textarea
@@ -199,12 +223,19 @@ export function JournalComposer({ onSubmitted, existingEntry, onCancelEdit }: Pr
             {audioUrl ? "Audio recorded ✓" : "Record audio"}
           </Button>
         ) : (
-          <Button variant="destructive" size="sm" onClick={stopRecording} className="gap-2">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={stopRecording}
+            className="gap-2"
+          >
             <Square size={14} />
             Stop — {format(seconds)}
           </Button>
         )}
-        {uploading && <span className="text-xs text-muted-foreground">Uploading…</span>}
+        {uploading && (
+          <span className="text-xs text-muted-foreground">Uploading…</span>
+        )}
         {audioUrl && isEditing && (
           <Button
             variant="ghost"
@@ -220,7 +251,12 @@ export function JournalComposer({ onSubmitted, existingEntry, onCancelEdit }: Pr
 
       <div className="flex gap-2">
         {onCancelEdit && (
-          <Button variant="outline" onClick={onCancelEdit} disabled={isPending || recording} className="flex-1">
+          <Button
+            variant="outline"
+            onClick={onCancelEdit}
+            disabled={isPending || recording}
+            className="flex-1"
+          >
             Cancel
           </Button>
         )}

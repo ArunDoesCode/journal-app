@@ -29,7 +29,10 @@ export function MetricSelector() {
       value={selectedMetric}
       onValueChange={(v) => setSelectedMetric(v as MeasurementField)}
     >
-      <SelectTrigger className="place-self-end w-fit px-8" aria-label="Measurement metric">
+      <SelectTrigger
+        className="w-fit place-self-end px-8"
+        aria-label="Measurement metric"
+      >
         <SelectValue placeholder="Select metric" />
       </SelectTrigger>
       <SelectContent>

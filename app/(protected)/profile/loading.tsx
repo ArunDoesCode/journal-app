@@ -1,8 +1,10 @@
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner"
 
 const loading = () => {
   return (
-    <div className="flex items-center justify-center h-screen"><Spinner /></div>
+    <div className="flex h-screen items-center justify-center">
+      <Spinner />
+    </div>
   )
 }
 

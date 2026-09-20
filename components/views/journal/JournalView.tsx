@@ -17,7 +17,9 @@ import type { JournalEntry, Measurement } from "@/types"
 
 export function JournalView() {
   const [isPending, startTransition] = useTransition()
-  const [todayEntry, setTodayEntry] = useState<JournalEntry | null | undefined>(undefined)
+  const [todayEntry, setTodayEntry] = useState<JournalEntry | null | undefined>(
+    undefined
+  )
   const [entries, setEntries] = useState<JournalEntry[] | null>(null)
   const [measurements, setMeasurements] = useState<Measurement[] | null>(null)
   const [editing, setEditing] = useState(false)
@@ -52,7 +54,8 @@ export function JournalView() {
   const todayPrParts = getPrPartsForDate(prSummary, today)
   const prDateList = Object.keys(prSummary.prPartsByDate)
   const showPrompt = !editing && todayEntry === null && todayPrParts.length > 0
-  const historyEntries = entries?.filter((e) => e.date !== todayEntry?.date) ?? []
+  const historyEntries =
+    entries?.filter((e) => e.date !== todayEntry?.date) ?? []
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -64,7 +67,7 @@ export function JournalView() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-muted-foreground font-normal">
+              <CardTitle className="text-sm font-normal text-muted-foreground">
                 Today — {todayEntry.date}
               </CardTitle>
               <Button
@@ -80,10 +83,16 @@ export function JournalView() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {todayEntry.text_content && (
-              <p className="text-sm whitespace-pre-wrap">{todayEntry.text_content}</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {todayEntry.text_content}
+              </p>
             )}
             {todayEntry.audio_url && (
-              <audio controls src={todayEntry.audio_url} className="w-full h-10" />
+              <audio
+                controls
+                src={todayEntry.audio_url}
+                className="h-10 w-full"
+              />
             )}
           </CardContent>
         </Card>
@@ -91,12 +100,14 @@ export function JournalView() {
         <div className="flex flex-col gap-3">
           {showPrompt && (
             <Card className="border-chart-1/50 bg-chart-1/10 p-4">
-                <p className="font-medium">🏆 Personal Best Day</p>
-                <p className="text-muted-foreground">
-                  You hit new records in{" "}
-                  {todayPrParts.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(", ")}.
-                  What is working well for you today?
-                </p>
+              <p className="font-medium">🏆 Personal Best Day</p>
+              <p className="text-muted-foreground">
+                You hit new records in{" "}
+                {todayPrParts
+                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                  .join(", ")}
+                . What is working well for you today?
+              </p>
             </Card>
           )}
           <JournalComposer

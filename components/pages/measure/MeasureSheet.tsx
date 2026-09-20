@@ -2,7 +2,12 @@
 
 import { useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -18,8 +23,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useMeasureStore } from "@/lib/store/measureStore"
-import { getMeasurements, insertMeasurement } from "@/lib/api/measurements/measurements"
-import { buildMeasurementPrSummary, getPrPartsForDate } from "@/lib/utils/measurement-pr"
+import {
+  getMeasurements,
+  insertMeasurement,
+} from "@/lib/api/measurements/measurements"
+import {
+  buildMeasurementPrSummary,
+  getPrPartsForDate,
+} from "@/lib/utils/measurement-pr"
 import {
   MEASUREMENT_FIELDS,
   type MeasurementField,
@@ -50,9 +61,8 @@ interface MeasureSheetProps {
 
 export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
   const [isPending, startTransition] = useTransition()
-  const [stepValues, setStepValues] = useState<Record<MeasurementField, string>>(
-    emptyStepValues()
-  )
+  const [stepValues, setStepValues] =
+    useState<Record<MeasurementField, string>>(emptyStepValues())
   const [currentStep, setCurrentStep] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const { setMeasurements } = useMeasureStore()
@@ -61,7 +71,9 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
   const currentValue = stepValues[currentField]
   const isLastStep = currentStep === MEASUREMENT_FIELDS.length - 1
   const isValidNumber =
-    currentValue !== "" && !isNaN(Number(currentValue)) && Number(currentValue) > 0
+    currentValue !== "" &&
+    !isNaN(Number(currentValue)) &&
+    Number(currentValue) > 0
   const progress = ((currentStep + 1) / MEASUREMENT_FIELDS.length) * 100
 
   const resetLocalState = () => {
@@ -72,10 +84,14 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
   const handleSubmit = () => {
     startTransition(async () => {
       const today = new Date().toISOString().split("T")[0]
-      const values = MEASUREMENT_FIELDS.reduce<MeasurementValues>((acc, field) => {
-        acc[field] = stepValues[field] !== "" ? Number(stepValues[field]) : null
-        return acc
-      }, {} as MeasurementValues)
+      const values = MEASUREMENT_FIELDS.reduce<MeasurementValues>(
+        (acc, field) => {
+          acc[field] =
+            stepValues[field] !== "" ? Number(stepValues[field]) : null
+          return acc
+        },
+        {} as MeasurementValues
+      )
 
       const res = await insertMeasurement({ date: today, ...values })
       if (!res.success) {
@@ -146,7 +162,8 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
           <SheetHeader className="gap-2">
             <div className="flex items-center justify-between">
               <SheetTitle>
-                Step {currentStep + 1} of {MEASUREMENT_FIELDS.length}: {LABELS[currentField]}
+                Step {currentStep + 1} of {MEASUREMENT_FIELDS.length}:{" "}
+                {LABELS[currentField]}
               </SheetTitle>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -185,13 +202,18 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
                 placeholder="0.0"
                 value={currentValue}
                 onChange={(event) =>
-                  setStepValues((prev) => ({ ...prev, [currentField]: event.target.value }))
+                  setStepValues((prev) => ({
+                    ...prev,
+                    [currentField]: event.target.value,
+                  }))
                 }
                 onKeyDown={(event) => event.key === "Enter" && handleNext()}
                 className="h-16 text-center text-3xl font-light"
                 autoFocus
               />
-              <span className="w-8 text-lg font-medium text-muted-foreground">cm</span>
+              <span className="w-8 text-lg font-medium text-muted-foreground">
+                cm
+              </span>
             </div>
           </div>
 
@@ -206,7 +228,11 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
                 Back
               </Button>
             )}
-            <Button onClick={handleNext} disabled={!isValidNumber || isPending} className="flex-1">
+            <Button
+              onClick={handleNext}
+              disabled={!isValidNumber || isPending}
+              className="flex-1"
+            >
               {isPending ? "Saving…" : isLastStep ? "Submit" : "Next"}
             </Button>
           </div>

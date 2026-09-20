@@ -25,7 +25,10 @@ export default function ChartRangeSelector({
   onChange,
 }: ChartRangeSelectorProps) {
   return (
-    <Select value={value} onValueChange={(next) => onChange(next as ChartRange)}>
+    <Select
+      value={value}
+      onValueChange={(next) => onChange(next as ChartRange)}
+    >
       <SelectTrigger className="w-fit" aria-label="Chart range">
         <SelectValue placeholder="Select range" />
       </SelectTrigger>
