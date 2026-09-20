@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [ { "type": "command", "command": "/usr/bin/python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/convention-guard.py\"", "timeout": 10 } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Write|Edit|MultiEdit",
+        "hooks": [ { "type": "command", "command": "/usr/bin/python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-and-mark.py\"", "timeout": 30 } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "/usr/bin/python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-gate.py\"", "timeout": 120 } ] }
+    ],
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "/usr/bin/python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-context.py\"", "timeout": 10 } ] }
+    ]
+  }
+}
