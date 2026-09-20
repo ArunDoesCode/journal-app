@@ -43,3 +43,6 @@ next-env.d.ts
 public/sw.js
 public/sw*.js
 public/swe-worker-*.js
+
+# other tooling
+.antigravitycli/
