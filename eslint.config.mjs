@@ -1,6 +1,6 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import { defineConfig, globalIgnores } from "eslint/config"
+import nextVitals from "eslint-config-next/core-web-vitals"
+import nextTs from "eslint-config-next/typescript"
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -12,7 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated service worker bundle (serwist postbuild output).
+    // Minified third-party code — linting it is meaningless and it fails the gate.
+    "public/sw.js",
+    "public/sw*.js",
+    "public/swe-worker-*.js",
   ]),
-]);
+])
 
-export default eslintConfig;
+export default eslintConfig

@@ -12,7 +12,27 @@ This document is the **base convention layer** for the journal-app PWA. It descr
 
 Read the relevant skill first for a specific task; read this file for everything the skill doesn't restate. If a skill and this document disagree, the skill is correct for this project and this document is stale — flag it.
 
-## 2. Folder Structure
+## 2. Inherited Standards That Do NOT Apply Here
+
+A foreign standards doc (`DiecastOS — Next.js Frontend Standards`, from an unrelated Hono/Supabase ERP project) was found at the repo root and was almost certainly the missing base layer the four skills above were written to sit on top of. It was merged into this file section by section — only where it was actually true of this codebase. The following prescriptions from that doc do **not** apply, several are actively banned, and a future agent should not reintroduce them just because they turn up in a stray reference doc:
+
+| Inherited prescription                                                 | Verified against this repo                                                        | This project does instead                                                                              |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| TanStack Query for server state                                        | Not in `package.json`                                                             | Views fetch directly via `lib/api/*` in a `useEffect` + `useTransition` (§6, §8)                       |
+| `apiFetch` / axios + `lib/api/routes.ts` constants                     | No axios, no Hono backend                                                         | Supabase browser client (`lib/supabase/client.ts`) called directly from `lib/api/**` functions         |
+| nuqs URL state                                                         | Not in `package.json`                                                             | Zustand store or local `useState` (§7)                                                                 |
+| TanStack React Table / `components/common/DataTable.tsx`               | Not in `package.json`; no `components/common/`                                    | `recharts` for charts; no data-table UI exists                                                         |
+| Backend-driven realtime (EventSource/stream + query invalidation)      | No backend, no streams                                                            | Not used; state updates go straight into Zustand/`useState` after a fetch resolves                     |
+| "Single data path — backend first" (Hono API for every read/write)     | No Hono, no separate backend at all                                               | The Supabase client **is** the backend boundary; RLS does the enforcement a backend would otherwise do |
+| Worker Screen Rules (glove-friendly numpad UI, Hindi labels, QR login) | DiecastOS factory-floor domain concept                                            | N/A — irrelevant to a personal fitness/journal PWA                                                     |
+| SSR + `initialData` Page → View pattern                                | `page.tsx` here renders a client View with no props, no server fetch              | See §6 — the View fetches client-side after mount, there is no `initialData` hydration                 |
+| shadcn `Form`/`FormField`/`FormMessage` composition                    | `components/ui/form.tsx` does not exist                                           | Plain `register()` + manually rendered error `<p>` (§9)                                                |
+| `packages/validators/` shared Zod schemas                              | No monorepo, no shared packages                                                   | Zod schema declared inline above the component (§9)                                                    |
+| Monorepo path alias `@/` → `apps/web/src/`, `@diecastos/*` packages    | Single-app repo, `@/*` → repo root (`tsconfig.json`)                              | N/A                                                                                                    |
+| `NEXT_PUBLIC_API_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `.env.example`     | Neither var referenced anywhere; no `.env.example` file exists, only `.env.local` | Two vars only — see §17                                                                                |
+| Biome linting                                                          | ESLint flat config in use (`eslint.config.mjs`)                                   | `eslint .` (§12)                                                                                       |
+
+## 3. Folder Structure
 
 ```
 app/
@@ -44,7 +64,7 @@ lib/
   store/       Zustand stores: store/journalDraftStore.ts, store/measureStore.ts
   supabase/    client.ts (browser client factory), server.ts (server client factory, used in layout.tsx and proxy.ts)
   utils.ts     cn() helper (clsx + tailwind-merge)
-  utils/       feature-specific pure helpers: utils/measurement-pr.ts (PR calculation). utils/index.ts currently duplicates the same cn() as lib/utils.ts — see Inconsistencies (§13).
+  utils/       feature-specific pure helpers: utils/measurement-pr.ts (PR calculation). utils/index.ts currently duplicates the same cn() as lib/utils.ts — see Inconsistencies (§14).
   providers.tsx  client component: Toaster + Analytics + global offline listener
 
 types/
@@ -55,22 +75,23 @@ types/
 ```
 
 **Reserved for future use, do not assume they exist:**
+
 - `components/common/` — referenced by `structure-guard` as the destination for anything reusable across two or more features. It does not exist yet; every current component is either a shadcn primitive, a single-page View, or a single-page page-piece.
 - `lib/hooks/` — referenced by `structure-guard` for custom hooks (`use[Name].ts`). No hooks folder exists yet; the one bespoke hook in the codebase (`useRecordingTimer`) is defined inline inside `components/pages/journal/JournalComposer.tsx` rather than extracted. If you extract a second reusable hook, create `lib/hooks/` at that point — don't create it preemptively.
 
-## 3. Naming
+## 4. Naming
 
-| Thing | Convention | Example |
-|---|---|---|
-| Component file | `PascalCase.tsx` | `MeasureView.tsx`, `JournalComposer.tsx` |
-| Hook file (once `lib/hooks/` exists) | `use<Name>.ts` | `useOffline.ts` |
-| Store file | `<feature>Store.ts` | `measureStore.ts`, `journalDraftStore.ts` |
-| Store hook export | `use<Feature>Store` | `useMeasureStore`, `useJournalDraftStore` |
-| API function file | `<feature>/<feature>.ts` | `lib/api/journal/journal.ts` |
-| Type file | `<feature>.ts`, re-exported from `types/index.ts` | `types/measurements.ts` |
-| Route folder | `kebab-case/` | `journal/`, `measure/` (single-word here, but the rule is kebab-case for multi-word routes) |
+| Thing                                | Convention                                        | Example                                                                                     |
+| ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Component file                       | `PascalCase.tsx`                                  | `MeasureView.tsx`, `JournalComposer.tsx`                                                    |
+| Hook file (once `lib/hooks/` exists) | `use<Name>.ts`                                    | `useOffline.ts`                                                                             |
+| Store file                           | `<feature>Store.ts`                               | `measureStore.ts`, `journalDraftStore.ts`                                                   |
+| Store hook export                    | `use<Feature>Store`                               | `useMeasureStore`, `useJournalDraftStore`                                                   |
+| API function file                    | `<feature>/<feature>.ts`                          | `lib/api/journal/journal.ts`                                                                |
+| Type file                            | `<feature>.ts`, re-exported from `types/index.ts` | `types/measurements.ts`                                                                     |
+| Route folder                         | `kebab-case/`                                     | `journal/`, `measure/` (single-word here, but the rule is kebab-case for multi-word routes) |
 
-## 4. Import Order
+## 5. Import Order
 
 ```
 React / Next  →  third-party  →  @/components  →  @/lib  →  @/types  →  relative
@@ -96,13 +117,14 @@ import { Switch } from "@/components/ui/switch"
 import Image from "next/image"
 ```
 
-Note this file itself is not perfectly sorted (`@/components` block appears after `@/lib`, and `next/image` is last) — treat the *rule* (React/Next → third-party → `@/components` → `@/lib` → `@/types` → relative) as canonical, not this specific file's ordering.
+Note this file itself is not perfectly sorted (`@/components` block appears after `@/lib`, and `next/image` is last) — treat the _rule_ (React/Next → third-party → `@/components` → `@/lib` → `@/types` → relative) as canonical, not this specific file's ordering.
 
 Rules that are consistently followed:
+
 - Components are always imported directly from their file — there is no barrel export in `components/`.
 - Types are always imported from `@/types` (the barrel), never from `types/measurements.ts` directly. See `components/pages/measure/MeasureSheet.tsx`: `import { MEASUREMENT_FIELDS, type MeasurementField, type MeasurementValues } from "@/types"`.
 
-## 5. Page → View Pattern
+## 6. Page → View Pattern
 
 `page.tsx` is a thin shell: it renders the View and nothing else. It does not fetch data itself. The View is a client component (`"use client"`) that fetches its own data in a `useEffect` + `useTransition`.
 
@@ -140,17 +162,17 @@ export function MeasureView() {
 
 `journal/page.tsx` and `profile/page.tsx` follow the identical shell pattern. The auth gate lives one level up in `app/(protected)/layout.tsx`, which redirects to `/login` server-side before any View mounts — pages never re-check auth.
 
-## 6. State Management
+## 7. State Management
 
 Decision table (from `client-data-state` skill, restated as the base default):
 
-| State type | Where |
-|---|---|
-| Transient form field value | Local `useState` in the component |
-| Async loading / error for one fetch | Local `useState` (or `useTransition`'s `isPending`) in the View |
-| Selected item / filter shared across siblings of one feature | Zustand store |
-| Persisted filter or sort preference | Zustand store, `persist` middleware if it must survive a refresh |
-| Draft input that must survive navigation/reload | Zustand store with `persist` middleware |
+| State type                                                   | Where                                                            |
+| ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Transient form field value                                   | Local `useState` in the component                                |
+| Async loading / error for one fetch                          | Local `useState` (or `useTransition`'s `isPending`) in the View  |
+| Selected item / filter shared across siblings of one feature | Zustand store                                                    |
+| Persisted filter or sort preference                          | Zustand store, `persist` middleware if it must survive a refresh |
+| Draft input that must survive navigation/reload              | Zustand store with `persist` middleware                          |
 
 Zustand conventions, canonical form (`lib/store/measureStore.ts`):
 
@@ -216,7 +238,7 @@ export const useJournalDraftStore = create<JournalDraftState>()(
 
 Treat `measureStore.ts` (devtools, split interfaces, `clearAll`) as the canonical pattern for new stores. Reach for `persist` instead of `devtools` only when the store must survive a page reload (as the journal draft intentionally does) — but still name the reset action `clearAll` for consistency, even though the existing store doesn't.
 
-## 7. Data Functions
+## 8. Data Functions
 
 Files live at `lib/api/<feature>/<feature>.ts`. Every function is a plain `async function` — no `"use server"` directive, because all data access runs client-side through the Supabase browser client (`lib/supabase/client.ts`'s `createClient()`).
 
@@ -231,7 +253,9 @@ export type ApiResponse<T> =
 Both branches, from `lib/api/journal/journal.ts`:
 
 ```ts
-export async function getJournalEntries(): Promise<ApiResponse<JournalEntry[]>> {
+export async function getJournalEntries(): Promise<
+  ApiResponse<JournalEntry[]>
+> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("journal_entries")
@@ -267,9 +291,9 @@ if (!res.success) {
 }
 ```
 
-## 8. Forms
+## 9. Forms
 
-**Note on shadcn `Form` primitives:** `components/ui/` does **not** currently contain a `form.tsx` or `label.tsx` (no `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage` components exist in this repo). The `ui-form-standards` skill's checklist describes that composition as the target pattern, but no form in the codebase today uses it — see Inconsistencies (§13). Until those primitives are added, follow the pattern actually in use below, minus the `Form`/`FormMessage` wrapper components, using a plain `<label>` and a manually-rendered error `<p>`.
+**Note on shadcn `Form` primitives:** `components/ui/` does **not** currently contain a `form.tsx` or `label.tsx` (no `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage` components exist in this repo). The `ui-form-standards` skill's checklist describes that composition as the target pattern, but no form in the codebase today uses it — see Inconsistencies (§14). Until those primitives are added, follow the pattern actually in use below, minus the `Form`/`FormMessage` wrapper components, using a plain `<label>` and a manually-rendered error `<p>`.
 
 Canonical example, `components/views/profile/ProfileView.tsx`:
 
@@ -323,19 +347,21 @@ const onSubmit = (values: ProfileFormValues) => {
 Field-level error rendering (no `FormMessage`, plain conditional `<p>`):
 
 ```tsx
-<Input type="number" step="0.1" placeholder="170" {...register("height_cm")} />
-{errors.height_cm && (
-  <p className="text-xs text-destructive">{errors.height_cm.message}</p>
-)}
+;<Input type="number" step="0.1" placeholder="170" {...register("height_cm")} />
+{
+  errors.height_cm && (
+    <p className="text-xs text-destructive">{errors.height_cm.message}</p>
+  )
+}
 ```
 
 This form has no required-field asterisk marker and no grid layout — it's a single-column `flex flex-col gap-4`. If a future form needs a 2-column layout or required markers, follow the `ui-form-standards` checklist (`grid grid-cols-1 md:grid-cols-2 gap-2`, `<span className="text-red-500">*</span>`) since nothing in the codebase currently contradicts those specific conventions — they're simply unexercised, not violated.
 
 **Multi-step, non-RHF forms are also canonical here**, for wizard-style input: `components/pages/measure/MeasureSheet.tsx` collects 8 measurement fields one at a time via plain `useState` (`stepValues`, `currentStep`) with no Zod/RHF at all, validating each step inline (`isValidNumber`) before advancing. Use RHF+Zod for a single-screen form with several related fields (Profile); use plain `useState` step state for a linear wizard (Measure, Weight) where each screen is one field.
 
-## 9. Toasts
+## 10. Toasts
 
-Sonner only. Two Toaster usages exist in the codebase and they disagree — see Inconsistencies (§13). The one actually wired up and rendered is in `lib/providers.tsx`:
+Sonner only. Two Toaster usages exist in the codebase and they disagree — see Inconsistencies (§14). The one actually wired up and rendered is in `lib/providers.tsx`:
 
 ```tsx
 import { Toaster, toast } from "sonner"
@@ -357,7 +383,7 @@ else toast.error(res.message || "Failed to update")
 - Messages are short, sentence case, no trailing punctuation (`"Signed out"`, `"Measurements saved"`, `"Audio saved"`).
 - The global offline listener also lives in `lib/providers.tsx` and calls `toast.error(...)` directly on the `window` `"offline"` event — this is the one listener; don't duplicate it in feature components.
 
-## 10. Theming
+## 11. Theming
 
 `next-themes`, class strategy, wired in `components/theme-provider.tsx`:
 
@@ -387,7 +413,7 @@ const mounted = useSyncExternalStore(() => () => undefined, () => true, () => fa
 )}
 ```
 
-## 11. Code Style
+## 12. Code Style
 
 - TypeScript `strict: true` (`tsconfig.json`), `moduleResolution: "bundler"`, path alias `@/*` → repo root.
 - Prettier (`.prettierrc`) — read the literal settings, don't assume defaults:
@@ -408,9 +434,13 @@ const mounted = useSyncExternalStore(() => () => undefined, () => true, () => fa
 - ESLint flat config (`eslint.config.mjs`) extends `eslint-config-next/core-web-vitals` and `eslint-config-next/typescript`, ignores `.next/`, `out/`, `build/`, `next-env.d.ts`. No custom rules beyond that.
 - `cn()` (`lib/utils.ts`, thin wrapper over `clsx` + `tailwind-merge`) for every conditional/merged className. Used pervasively, e.g. `app/layout.tsx`: `className={cn("antialiased", outfit.variable)}`.
 - Icons: `lucide-react` only (`Mic`, `Square` in `JournalComposer.tsx`; `CircleCheckIcon` etc. in `sonner.tsx`).
-- Default export vs named export is inconsistent across the codebase — see Inconsistencies (§13).
+- Default export vs named export is inconsistent across the codebase — see Inconsistencies (§14).
+- No `any` anywhere in `app/`, `components/`, `lib/`, or `types/` — confirmed by grep, not just aspiration. Keep it that way.
+- `interface` for object shapes (`Measurement`, `Profile`, `JournalEntry`), `type` for unions/aliases/derived types (`ChartRange`, `MeasurementField`, `Record<...>`) — see `types/measurements.ts`. This split is genuinely followed, not just stated.
+- Props types: most components declare `interface <ComponentName>Props` (`ChartRangeSelectorProps`, `WeightSheetProps`); a few use a bare `interface Props` instead (`JournalComposer.tsx`, `JournalHistory.tsx`, `MeasurementChart.tsx`). Prefer the `<ComponentName>Props` form for new components.
+- `as const` on fixed tuples that back a derived union type, e.g. `MEASUREMENT_FIELDS = [...] as const` → `type MeasurementField = (typeof MEASUREMENT_FIELDS)[number]` (`types/measurements.ts`).
 
-## 12. Quality Gates
+## 13. Quality Gates
 
 `package.json`:
 
@@ -426,7 +456,7 @@ const mounted = useSyncExternalStore(() => () => undefined, () => true, () => fa
 
 Run `npm run verify` before considering any change done. All three (`format:check`, `typecheck`, `lint`) must pass. There is no test suite (no `test` script, no test files anywhere in `app/`, `components/`, or `lib/`) — correctness is enforced by type-checking, linting, and manual/agent review only, not by automated tests.
 
-## 13. Inconsistencies Found (documented, not silently resolved)
+## 14. Inconsistencies Found (documented, not silently resolved)
 
 1. **Two Zustand store shapes.** `measureStore.ts` uses `devtools`, split `State`/`Actions` interfaces, and a `clearAll` action (matches every skill's stated convention). `journalDraftStore.ts` uses `persist`, a single combined interface, and a `clearDraft` action instead of `clearAll`. Treat `measureStore.ts` as canonical for new stores; `persist` is the right middleware choice only when the store must survive a reload.
 2. **Two Toaster configurations, only one active.** `lib/providers.tsx` renders sonner's raw `<Toaster richColors position="top-right" />`, which is what the app actually ships. `components/ui/sonner.tsx` defines a separate, more elaborate themed `Toaster` wrapper (dark/light via `next-themes`, custom icons, CSS-var styling) that is never imported anywhere — it's dead code. The `ui-form-standards` skill's description of the Toaster config (`theme="dark" richColors duration={2000}`) matches neither file exactly; treat `lib/providers.tsx`'s actual JSX as ground truth.
@@ -434,9 +464,11 @@ Run `npm run verify` before considering any change done. All three (`format:chec
 4. **Duplicate `cn()` definition.** `lib/utils.ts` and `lib/utils/index.ts` contain byte-identical `cn()` implementations. Nothing in the codebase currently imports from `lib/utils/index.ts` for `cn` (all call sites use `@/lib/utils`) — this appears to be leftover duplication from a refactor, not two sanctioned patterns.
 5. **`uploadAudio` breaks the `ApiResponse<T>` contract.** It returns a bare `string` and `throw`s on failure instead of returning `ApiResponse<string>`, and its one call site (`JournalComposer.tsx`) wraps it in `try/catch` rather than checking `.success`. This is an intentional, isolated exception for a Storage upload, not a second sanctioned data-function shape — new `lib/api/**` functions should still return `ApiResponse<T>`.
 6. **Client naming: `createClient` vs `createBrowserClient`.** `client-data-state`'s skill doc refers to `createBrowserClient` from `@/lib/supabase/client`; the actual exported function in `lib/supabase/client.ts` (and every call site: `journal.ts`, `profile.ts`, `measurements.ts`, `ProfileView.tsx`, `JournalComposer.tsx`) is named `createClient`. Use `createClient` — it's what exists.
-7. **Import order is a stated rule, not a strictly enforced one.** `ProfileView.tsx` itself (used as the canonical form example in §4 and §8) has `@/components/*` imports interleaved after `@/lib/*` imports and a stray `next/image` import at the very end. Treat the ordering rule as the target, not a guarantee every existing file satisfies it.
+7. **Import order is a stated rule, not a strictly enforced one.** `ProfileView.tsx` itself (used as the canonical form example in §5 and §9) has `@/components/*` imports interleaved after `@/lib/*` imports and a stray `next/image` import at the very end. Treat the ordering rule as the target, not a guarantee every existing file satisfies it.
+8. **Default vs named export is mixed, not a settled convention.** `WeightSheet.tsx`, `WeightChart.tsx`, and `ChartRangeSelector.tsx` use `export default function`; every View and most other `pages/` components (`JournalComposer.tsx`, `MeasureSheet.tsx`, `MeasurementChart.tsx`, `MetricSelector.tsx`, `navbar.tsx`, etc.) use a named `export function`. There is no dominant pattern to codify — named export is more common, so prefer it for new components, but don't "fix" the existing default exports as part of an unrelated change.
+9. **Zustand stores hold fetched server data, not just UI state.** `measureStore.ts`'s `measurements: Measurement[]` is data fetched from Supabase, cached in the store — this project does not follow a "Zustand is UI-state-only" rule some other codebases use, because there is no separate server-state cache (no TanStack Query) to keep it out of. Treat Zustand here as the single client-side cache for both UI state and fetched data.
 
-## 14. Next.js 16 Specifics
+## 15. Next.js 16 Specifics
 
 This project is on Next.js **16.2.6**. Conventions that differ from older Next.js knowledge:
 
@@ -445,3 +477,25 @@ This project is on Next.js **16.2.6**. Conventions that differ from older Next.j
 - **Async dynamic APIs.** `cookies()`/`headers()` must be awaited. `lib/supabase/server.ts`'s client factory and `app/(protected)/layout.tsx` both `await createClient()` where the server Supabase client wraps `cookies()`. Any new Server Component or Route Handler reading `params`/`searchParams` must treat them as `Promise`s and `await` them.
 - **`next lint` is removed.** The `lint` script runs `eslint .` directly (`package.json`), not `next lint`.
 - **PWA wrapping.** `next-pwa` still works via `next.config.ts`'s `withPWA(...)` wrapper around the Turbopack-enabled config — see `pwa-runtime-ux` skill for the caching-strategy rules.
+
+## 16. Rendering Strategy
+
+There is no ISR, no PPR, and no route in this app fetches data server-side to hydrate a client component with `initialData` — every route is one of two shapes:
+
+| Route                                             | Rendering                                                                                                    | Notes                                                                                           |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `(public)/login`                                  | Server component shell → client `LoginView`                                                                  | Auth redirect happens in `proxy.ts`, not in the page                                            |
+| `(protected)/*` (`journal`, `measure`, `profile`) | Server layout does the auth check (`getUser()`, redirect to `/login`) → thin server `page.tsx` → client View | View fetches its own data client-side after mount (§6); `loading.tsx` covers the gap until then |
+
+Do not introduce `initialData`/SSR-fetch-then-hydrate for a route unless you also change the View to accept it as a prop — the current Views take no props and always fetch on mount.
+
+## 17. Environment Variables
+
+Two variables, both client-exposed (Supabase RLS is the actual security boundary, not keeping this server-only):
+
+| Variable                               | Scope  | Purpose                                                                                                                       |
+| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Client | Supabase project URL                                                                                                          |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Client | Supabase publishable key (RLS-enforced) — note this project uses the newer `PUBLISHABLE_KEY` naming, not the older `ANON_KEY` |
+
+Used in `lib/supabase/client.ts`, `lib/supabase/server.ts`, `proxy.ts`, and `app/layout.tsx`. There is no `NEXT_PUBLIC_API_URL` (no separate backend) and no `SUPABASE_SERVICE_ROLE_KEY` anywhere in the codebase. Values live in `.env.local` only — there is no `.env.example` checked in; if one is added, keep it in sync with these two vars.

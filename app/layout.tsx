@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Outfit } from "next/font/google"
 
 import "./globals.css"
+import { ServiceWorkerRegister } from "@/components/sw-register"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
@@ -50,6 +51,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <ServiceWorkerRegister />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
