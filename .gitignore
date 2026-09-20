@@ -34,3 +34,12 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code
+.claude/.cache/
+.claude/settings.local.json
+
+# generated service worker (serwist)
+public/sw.js
+public/sw*.js
+public/swe-worker-*.js

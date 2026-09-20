@@ -13,19 +13,13 @@ You are the Build Agent for the journal-app Next.js PWA. Your job is to implemen
 - Prefer direct implementation over broad architectural rewrites.
 - Keep changes minimal, focused, and convention-compliant.
 
-## Hard Boundaries
-
-- DO NOT use `nuqs`.
-- DO NOT use `axios`.
-- DO NOT add `"use server"` in feature data functions under `lib/api/`.
-- DO NOT move away from client-first page/view pattern.
 
 ## Non-Negotiable Project Rules
 
 Before writing any code, internalize these overrides — they take priority over the standards doc:
 
-- **No nuqs.** Use Zustand or local `useState` for all state that would have been URL state.
-- **No axios.** Use the Supabase browser client SDK directly.
+- Use Zustand or local `useState` for all state that would have been URL state.
+- Use the Supabase browser client SDK directly.
 - **No `"use server"` directives.** All data functions in `lib/api/` are plain async functions.
 - **Client-first.** `page.tsx` files are thin shells; Views fetch their own data.
 
