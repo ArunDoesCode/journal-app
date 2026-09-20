@@ -44,12 +44,22 @@ These override the defaults in nextjs-standards.md:
 ## Naming Quick Reference
 | Thing | Convention |
 |---|---|
-| Component file | `PascalCase.tsx` |
+| Feature component (`views/`, `pages/`) | `PascalCase.tsx` |
+| App-shell component (`components/` root) | `kebab-case.tsx` |
+| shadcn primitive (`components/ui/`) | `kebab-case.tsx` |
 | Hook file | `use[Name].ts` |
 | Store file | `[feature]Store.ts` |
 | API function file | `[feature].ts` |
 | Type file | `[feature].ts` |
 | Route folder | `kebab-case/` |
+
+**Component filenames are split by location, not uniform.** Feature components use
+PascalCase (`MeasureView.tsx`, `JournalComposer.tsx`). Shell components at the root of
+`components/` use kebab-case — `navbar.tsx`, `theme-provider.tsx`, `sw-register.tsx` —
+as do all shadcn primitives in `components/ui/`. Do not "fix" a kebab-case shell
+component to PascalCase; that is the established convention, not a violation.
+Exported symbols are always PascalCase regardless of filename (`ServiceWorkerRegister`
+from `sw-register.tsx`).
 
 ## Import Order
 ```
