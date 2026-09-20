@@ -71,7 +71,6 @@ types/
   index.ts     the barrel — the ONLY import path components/lib should use for types
   base.ts      ApiResponse<T>
   journal.ts, measurements.ts, profile.ts   one file per feature
-  next-pwa.d.ts  ambient module declaration for next-pwa
 ```
 
 **Reserved for future use, do not assume they exist:**
@@ -473,10 +472,10 @@ Run `npm run verify` before considering any change done. All three (`format:chec
 This project is on Next.js **16.2.6**. Conventions that differ from older Next.js knowledge:
 
 - **`middleware.ts` → `proxy.ts`.** The file at the repo root is `proxy.ts`, exporting a named `proxy` function (not `middleware`), plus the usual `export const config = { matcher: [...] }`. See `proxy.ts` — it runs the Supabase session refresh and the protected/login redirect logic that used to live in `middleware.ts`.
-- **Turbopack is the default bundler.** `next.config.ts` explicitly sets `turbopack: {}` (twice — once inside `nextConfig`, once spread again when wrapped with `withPWA`), and no webpack-specific config is present.
+- **Turbopack is the default bundler.** `next.config.ts` sets `turbopack: {}` and no webpack-specific config is present. **Webpack-based Next plugins silently do nothing** — they are never invoked, the build still succeeds, and the feature is simply absent. This is not theoretical: it is exactly how `next-pwa` produced no service worker for this project.
 - **Async dynamic APIs.** `cookies()`/`headers()` must be awaited. `lib/supabase/server.ts`'s client factory and `app/(protected)/layout.tsx` both `await createClient()` where the server Supabase client wraps `cookies()`. Any new Server Component or Route Handler reading `params`/`searchParams` must treat them as `Promise`s and `await` them.
 - **`next lint` is removed.** The `lint` script runs `eslint .` directly (`package.json`), not `next lint`.
-- **PWA wrapping.** `next-pwa` still works via `next.config.ts`'s `withPWA(...)` wrapper around the Turbopack-enabled config — see `pwa-runtime-ux` skill for the caching-strategy rules.
+- **PWA: no bundler plugin.** `next.config.ts` wraps nothing. The service worker is built by the Serwist **CLI** in a `postbuild` script (`app/sw.ts` → `public/sw.js`) and registered manually from `components/sw-register.tsx` in production only. Both `next-pwa` and `@serwist/next`'s plugin were tried and produced no worker under Turbopack. See the `pwa-runtime-ux` skill.
 
 ## 16. Rendering Strategy
 

@@ -10,7 +10,7 @@ Specific UX rules (nav design, offline behavior, audio, chart) are defined in **
 ## Owns
 
 - `app/manifest.json` shape and required fields
-- `next-pwa` configuration in `next.config.ts`
+- Serwist service worker: `app/sw.ts`, `serwist.config.js`, the `postbuild` script
 - App shell caching strategy (app shell only — no data caching)
 - Offline detection and toast trigger
 - Bottom navigation component design rules
@@ -24,9 +24,24 @@ Specific UX rules (nav design, offline behavior, audio, chart) are defined in **
 
 ## PWA Setup Checklist
 
-- [ ] `next-pwa` installed and configured for **app shell caching only**
+> **Do NOT install `next-pwa`.** It is a webpack plugin and Next 16 builds with
+> Turbopack, so it silently produces no service worker at all. It was removed from
+> this project for exactly that reason. The `@serwist/next` *plugin* fails the same
+> way — it was tried and rejected. Use the CLI flow below.
+
+- [ ] Service worker source in `app/sw.ts` (Serwist + `defaultCache`)
+- [ ] `serwist.config.js` maps `swSrc: app/sw.ts` → `swDest: public/sw.js`
+- [ ] `"postbuild": "serwist build --config serwist.config.js"` in package.json —
+      the worker is generated at build time, never hand-written
+- [ ] Registration via `components/sw-register.tsx`, **production only** (`public/sw.js`
+      persists on disk and `next dev` serves `public/` statically, so an ungated
+      registration makes dev serve stale production assets)
+- [ ] `public/sw.js` gitignored, prettier-ignored, and in eslint `globalIgnores`
 - [ ] `app/manifest.json` present with: `name`, `short_name`, `start_url`, `display: "standalone"`, `background_color`, `theme_color`, `icons`
-- [ ] Icons present: `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` in `public/`
+- [ ] Icons at their real declared sizes — `icon-192.png` (192), `icon-512.png` (512),
+      `icon-512-maskable.png` (512, ~20% safe-zone padding), `apple-touch-icon.png` (180).
+      Sizes in the manifest must match the actual pixel dimensions or Chrome rejects
+      them for installability. Master artwork: `docs/assets/icon-master.png`.
 - [ ] `<link rel="manifest">` and `<meta name="theme-color">` in root `layout.tsx`
 - [ ] `<meta name="apple-mobile-web-app-capable" content="yes">` in root `layout.tsx``
 
