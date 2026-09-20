@@ -5,11 +5,11 @@ argument-hint: "Describe the PWA or mobile UX requirement you are addressing."
 ---
 # PWA & Runtime UX
 
-Specific UX rules (nav design, offline behavior, audio, chart) are defined in **[plan.md](../../../plan.md)**. This skill provides a reusable implementation checklist.
+Specific UX rules (nav design, offline behavior, audio, chart) are defined in **[plan.md](../../../docs/archive/plan-original.md)**. This skill provides a reusable implementation checklist.
 
 ## Owns
 
-- `public/manifest.json` shape and required fields
+- `app/manifest.json` shape and required fields
 - `next-pwa` configuration in `next.config.ts`
 - App shell caching strategy (app shell only — no data caching)
 - Offline detection and toast trigger
@@ -25,7 +25,7 @@ Specific UX rules (nav design, offline behavior, audio, chart) are defined in **
 ## PWA Setup Checklist
 
 - [ ] `next-pwa` installed and configured for **app shell caching only**
-- [ ] `public/manifest.json` present with: `name`, `short_name`, `start_url`, `display: "standalone"`, `background_color`, `theme_color`, `icons`
+- [ ] `app/manifest.json` present with: `name`, `short_name`, `start_url`, `display: "standalone"`, `background_color`, `theme_color`, `icons`
 - [ ] Icons present: `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` in `public/`
 - [ ] `<link rel="manifest">` and `<meta name="theme-color">` in root `layout.tsx`
 - [ ] `<meta name="apple-mobile-web-app-capable" content="yes">` in root `layout.tsx``

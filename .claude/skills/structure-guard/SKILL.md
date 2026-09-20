@@ -6,7 +6,7 @@ argument-hint: "Describe the file you need to place or the naming decision you n
 
 # Structure Guard
 
-Full folder rules live in **[nextjs-standards.md](../../../nextjs-standards.md)** — this skill only states project overrides and acts as a decision guide. Do not duplicate the standards doc here.
+Full folder rules live in **[nextjs-standards.md](../../../docs/nextjs-standards.md)** — this skill only states project overrides and acts as a decision guide. Do not duplicate the standards doc here.
 
 ## Owns
 - File placement decisions (which folder, which subfolder)

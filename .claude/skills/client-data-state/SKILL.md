@@ -6,7 +6,7 @@ argument-hint: "Describe the data operation or state shape you need to implement
 
 # Client Data & State
 
-Zustand conventions live in **[nextjs-standards.md](../../../nextjs-standards.md)** — State Management section. This skill adds the **project-level overrides** which are significant for this PWA.
+Zustand conventions live in **[nextjs-standards.md](../../../docs/nextjs-standards.md)** — State Management section. This skill adds the **project-level overrides** which are significant for this PWA.
 
 ## Owns
 - Supabase browser client usage and pattern
@@ -36,11 +36,11 @@ Functions in `lib/api/[feature]/[feature].ts` are plain async functions — no d
 
 ```ts
 // lib/api/measurements/measurements.ts
-import { createBrowserClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import type { ApiResponse, Measurement } from "@/types";
 
 export async function getMeasurements(): Promise<ApiResponse<Measurement[]>> {
-  const supabase = createBrowserClient();
+  const supabase = createClient();
   const { data, error } = await supabase.from("measurements").select("*");
   if (error) return { success: false, message: error.message, errorCode: error.code };
   return { success: true, data: data ?? [] };
