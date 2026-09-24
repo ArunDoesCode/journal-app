@@ -1,19 +1,39 @@
 "use client"
 
 import { useEffect, useMemo, useState, useTransition } from "react"
+import dynamic from "next/dynamic"
 import { toast } from "sonner"
 import { getMeasurements } from "@/lib/api/measurements/measurements"
 import { getProfile } from "@/lib/api/profile/profile"
 import { useMeasureStore } from "@/lib/store/measureStore"
-import type { ChartRange, Measurement } from "@/types"
+import type { Measurement } from "@/types"
 import { buildMeasurementPrSummary } from "@/lib/utils/measurement-pr"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import ChartRangeSelector from "@/components/pages/measure/ChartRangeSelector"
 import { MetricSelector } from "@/components/pages/measure/MetricSelector"
-import { MeasurementChart } from "@/components/pages/measure/MeasurementChart"
-import { MeasureSheet } from "@/components/pages/measure/MeasureSheet"
-import WeightSheet from "@/components/pages/measure/WeightSheet"
-import WeightChart from "@/components/pages/measure/WeightChart"
+
+const ChartSkeleton = () => <Skeleton className="h-48 w-full rounded-xl" />
+
+const MeasurementChart = dynamic(
+  () =>
+    import("@/components/pages/measure/MeasurementChart").then(
+      (mod) => mod.MeasurementChart
+    ),
+  { ssr: false, loading: ChartSkeleton }
+)
+const WeightChart = dynamic(
+  () => import("@/components/pages/measure/WeightChart"),
+  { ssr: false, loading: ChartSkeleton }
+)
+const MeasureSheet = dynamic(() =>
+  import("@/components/pages/measure/MeasureSheet").then(
+    (mod) => mod.MeasureSheet
+  )
+)
+const WeightSheet = dynamic(
+  () => import("@/components/pages/measure/WeightSheet")
+)
 
 function addDays(date: string, days: number): Date {
   const target = new Date(`${date}T00:00:00`)
@@ -26,27 +46,6 @@ function formatDate(date: Date): string {
     year: "numeric",
     month: "short",
     day: "numeric",
-  })
-}
-
-const RANGE_DAYS: Record<ChartRange, number> = {
-  week: 7,
-  month: 30,
-  all_time: 365,
-}
-
-function filterMeasurementsByRange(
-  measurements: Measurement[],
-  range: ChartRange
-): Measurement[] {
-  const days = RANGE_DAYS[range]
-  const startDate = new Date()
-  startDate.setHours(0, 0, 0, 0)
-  startDate.setDate(startDate.getDate() - (days - 1))
-
-  return measurements.filter((measurement) => {
-    const measurementDate = new Date(`${measurement.date}T00:00:00`)
-    return measurementDate.getTime() >= startDate.getTime()
   })
 }
 
@@ -63,11 +62,19 @@ export function MeasureView() {
   } = useMeasureStore()
 
   const [weightCheckWeeks, setWeightCheckWeeks] = useState<1 | 2>(1)
+  // Range-bound subset fetched only for "week"/"month" chart display — never
+  // used for PR calculations, which always need the full unbounded history.
+  const [rangeMeasurements, setRangeMeasurements] = useState<
+    Measurement[] | null
+  >(null)
 
+  // Full, unbounded history — the canonical source for PR calculations and
+  // weight-check-date logic. Fetched once, independent of the chart range so
+  // switching ranges can never silently narrow the PR basis.
   useEffect(() => {
     startTransition(async () => {
       const [measurementResult, profileResult] = await Promise.all([
-        getMeasurements(),
+        getMeasurements("all_time"),
         getProfile(),
       ])
 
@@ -84,6 +91,20 @@ export function MeasureView() {
       }
     })
   }, [setMeasurements, startTransition, setWeightCheckWeeks])
+
+  // Chart-only fetch, bounded server-side for "week"/"month" to keep the
+  // payload small when a narrower range is selected.
+  useEffect(() => {
+    if (chartRange === "all_time") return
+    startTransition(async () => {
+      const result = await getMeasurements(chartRange)
+      if (result.success) {
+        setRangeMeasurements(result.data)
+      } else {
+        toast.error(result.message || "Failed to load measurements")
+      }
+    })
+  }, [chartRange, startTransition])
 
   const lastWeightDate = useMemo(
     () =>
@@ -114,10 +135,8 @@ export function MeasureView() {
     [measurements]
   )
   const metricPrDates = prSummary.prDatesByMetric[selectedMetric]
-  const filteredMeasurements = useMemo(
-    () => filterMeasurementsByRange(measurements, chartRange),
-    [measurements, chartRange]
-  )
+  const chartMeasurements =
+    chartRange === "all_time" ? measurements : (rangeMeasurements ?? [])
 
   return (
     <div className="flex min-h-screen flex-col gap-4 p-4 pb-24">
@@ -133,14 +152,14 @@ export function MeasureView() {
           </Button>
         </div>
         <MeasurementChart
-          measurements={filteredMeasurements}
+          measurements={chartMeasurements}
           selectedMetric={selectedMetric}
           prDates={metricPrDates}
         />
         <MetricSelector />
         <h1 className="pl-2 font-bold">Weight </h1>
 
-        <WeightChart measurements={filteredMeasurements} />
+        <WeightChart measurements={chartMeasurements} />
 
         <Button
           onClick={() => {

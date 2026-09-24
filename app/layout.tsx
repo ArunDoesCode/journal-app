@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Outfit } from "next/font/google"
 
 import "./globals.css"
@@ -14,9 +14,24 @@ export const metadata: Metadata = {
   description: "Daily body measurement and journaling PWA",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Body Metrics",
   },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "oklch(1 0 0)" },
+    {
+      media: "(prefers-color-scheme: dark)",
+      color: "oklch(0.147 0.004 49.3)",
+    },
+  ],
 }
 
 export default function RootLayout({
@@ -31,8 +46,6 @@ export default function RootLayout({
       className={cn("antialiased", outfit.variable)}
     >
       <head>
-        <meta name="theme-color" content="#000000" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
         <link rel="manifest" href="/manifest.json" />
         {supabaseOrigin && (
           <>
@@ -49,6 +62,8 @@ export default function RootLayout({
           rel="apple-touch-icon-precomposed"
           href="/apple-touch-icon-precomposed.png"
         />
+        {/* iOS apple-touch-startup-image splash screens (per-device-size PNGs)
+            would go here — requires an image pipeline, not added in this pass. */}
       </head>
       <body>
         <ServiceWorkerRegister />

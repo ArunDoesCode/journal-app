@@ -1,12 +1,37 @@
 import { createClient } from "@/lib/supabase/client"
-import type { ApiResponse, Measurement, UpsertMeasurementInput } from "@/types"
+import type {
+  ApiResponse,
+  ChartRange,
+  Measurement,
+  UpsertMeasurementInput,
+} from "@/types"
 
-export async function getMeasurements(): Promise<ApiResponse<Measurement[]>> {
+// Bounds the query to the chart's visible window for "week"/"month" so those
+// ranges fetch less. "all_time" must return the full history unbounded —
+// PR/personal-best calculations depend on seeing every row, not just the
+// last year — so no cutoff is applied for it.
+const RANGE_DAYS: Partial<Record<ChartRange, number>> = {
+  week: 7,
+  month: 30,
+}
+
+export async function getMeasurements(
+  range: ChartRange = "all_time"
+): Promise<ApiResponse<Measurement[]>> {
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from("measurements")
-    .select("*")
-    .order("date", { ascending: false })
+  const days = RANGE_DAYS[range]
+
+  let query = supabase.from("measurements").select("*")
+
+  if (days !== undefined) {
+    const cutoff = new Date()
+    cutoff.setHours(0, 0, 0, 0)
+    cutoff.setDate(cutoff.getDate() - (days - 1))
+    const cutoffDate = cutoff.toISOString().split("T")[0]
+    query = query.gte("date", cutoffDate)
+  }
+
+  const { data, error } = await query.order("date", { ascending: false })
 
   if (error)
     return { success: false, message: error.message, errorCode: error.code }

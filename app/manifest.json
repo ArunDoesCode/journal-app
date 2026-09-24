@@ -4,7 +4,7 @@
   "description": "Daily body measurement and journaling",
   "start_url": "/measure",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [

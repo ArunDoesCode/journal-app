@@ -8,9 +8,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleOffline = () =>
       toast.error("App is offline. Please connect to the internet.")
-    window.addEventListener("offline", handleOffline)
+    const handleOnline = () => toast.success("Back online.")
 
-    return () => window.removeEventListener("offline", handleOffline)
+    if (!navigator.onLine) handleOffline()
+
+    window.addEventListener("offline", handleOffline)
+    window.addEventListener("online", handleOnline)
+
+    return () => {
+      window.removeEventListener("offline", handleOffline)
+      window.removeEventListener("online", handleOnline)
+    }
   }, [])
 
   return (

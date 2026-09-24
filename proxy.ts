@@ -26,9 +26,8 @@ export async function proxy(request: NextRequest) {
   )
 
   // Refresh session — do not remove this
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data } = await supabase.auth.getClaims()
+  const claims = data?.claims
 
   const pathname = request.nextUrl.pathname
   const isProtected =
@@ -37,13 +36,13 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/profile")
   const isLogin = pathname.startsWith("/login")
 
-  if (isProtected && !user) {
+  if (isProtected && !claims) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)
   }
 
-  if (isLogin && user) {
+  if (isLogin && claims) {
     const url = request.nextUrl.clone()
     url.pathname = "/measure"
     return NextResponse.redirect(url)
@@ -53,5 +52,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json|robots.txt|.*\\.(?:png|jpg|jpeg|svg|webp|gif|ico)$).*)",
+  ],
 }

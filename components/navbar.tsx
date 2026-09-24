@@ -1,10 +1,10 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { BookOpen, User, Ruler } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useEffect, useRef } from "react"
 
 const navItems = [
   { href: "/measure", icon: Ruler, label: "Measure" },
@@ -52,7 +52,8 @@ export function BottomNav() {
   return (
     <nav
       ref={navRef}
-      className="liquid-glass-nav fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 translate-y-0 items-center gap-2 rounded-full p-2 opacity-100 transition-all duration-300"
+      style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+      className="liquid-glass-nav fixed left-1/2 z-50 flex -translate-x-1/2 translate-y-0 items-center gap-2 rounded-full p-2 opacity-100 transition-all duration-300"
     >
       {navItems.map(({ href, icon: Icon, label }) => {
         const active = pathname.startsWith(href)

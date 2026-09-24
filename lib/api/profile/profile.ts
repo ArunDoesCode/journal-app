@@ -3,15 +3,14 @@ import type { ApiResponse, Profile, ProfileUpdateInput } from "@/types"
 
 export async function getProfile(): Promise<ApiResponse<Profile>> {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { success: false, message: "Not authenticated" }
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims.sub
+  if (!userId) return { success: false, message: "Not authenticated" }
 
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single()
 
   if (error && error.code !== "PGRST116") {
@@ -21,7 +20,7 @@ export async function getProfile(): Promise<ApiResponse<Profile>> {
   return {
     success: true,
     data: data ?? {
-      id: user.id,
+      id: userId,
       height_cm: null,
       full_name: null,
       avatar_url: null,
