@@ -1,0 +1,12 @@
+dist/
+node_modules/
+.next/
+.turbo/
+coverage/
+pnpm-lock.yaml
+.pnpm-store/
+
+# generated service worker bundle (serwist)
+public/sw.js
+public/sw*.js
+public/swe-worker-*.js
