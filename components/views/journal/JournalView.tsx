@@ -8,6 +8,7 @@ import {
   buildMeasurementPrSummary,
   getPrPartsForDate,
 } from "@/lib/utils/measurement-pr"
+import { todayLocalISODate } from "@/lib/utils/date"
 import { JournalComposer } from "@/components/pages/journal/JournalComposer"
 import { JournalHistory } from "@/components/pages/journal/JournalHistory"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,7 +47,7 @@ export function JournalView() {
     fetchAll()
   }, [fetchAll])
 
-  const today = useMemo(() => new Date().toISOString().split("T")[0], [])
+  const today = useMemo(() => todayLocalISODate(), [])
   const prSummary = useMemo(
     () => buildMeasurementPrSummary(measurements ?? []),
     [measurements]

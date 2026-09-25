@@ -23,16 +23,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useMeasureStore } from "@/lib/store/measureStore"
-import {
-  getMeasurements,
-  insertMeasurement,
-} from "@/lib/api/measurements/measurements"
+import { insertMeasurement } from "@/lib/api/measurements/measurements"
 import {
   buildMeasurementPrSummary,
   getPrPartsForDate,
 } from "@/lib/utils/measurement-pr"
+import { todayLocalISODate } from "@/lib/utils/date"
 import {
   MEASUREMENT_FIELDS,
+  type Measurement,
   type MeasurementField,
   type MeasurementValues,
 } from "@/types"
@@ -54,6 +53,16 @@ const emptyStepValues = (): Record<MeasurementField, string> =>
     string
   >
 
+const stepValuesFromRow = (
+  row: Measurement | null
+): Record<MeasurementField, string> =>
+  Object.fromEntries(
+    MEASUREMENT_FIELDS.map((field) => [
+      field,
+      row?.[field] != null ? String(row[field]) : "",
+    ])
+  ) as Record<MeasurementField, string>
+
 interface MeasureSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -65,7 +74,23 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
     useState<Record<MeasurementField, string>>(emptyStepValues())
   const [currentStep, setCurrentStep] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { setMeasurements } = useMeasureStore()
+  const { measurements, upsertMeasurement } = useMeasureStore()
+
+  // Sheet is mounted persistently (controlled by `open`, not conditional
+  // rendering), so seed the wizard from the latest data each time it opens.
+  // Adjusting state on a prop change during render, per React docs, instead
+  // of an effect — avoids the extra cascading render an effect would cause.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
+      const today = todayLocalISODate()
+      const sourceRow =
+        measurements.find((m) => m.date === today) ?? measurements[0] ?? null
+      setStepValues(stepValuesFromRow(sourceRow))
+      setCurrentStep(0)
+    }
+  }
 
   const currentField = MEASUREMENT_FIELDS[currentStep]
   const currentValue = stepValues[currentField]
@@ -83,11 +108,15 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
 
   const handleSubmit = () => {
     startTransition(async () => {
-      const today = new Date().toISOString().split("T")[0]
+      const today = todayLocalISODate()
+      const sourceRow =
+        measurements.find((m) => m.date === today) ?? measurements[0] ?? null
       const values = MEASUREMENT_FIELDS.reduce<MeasurementValues>(
         (acc, field) => {
           acc[field] =
-            stepValues[field] !== "" ? Number(stepValues[field]) : null
+            stepValues[field] !== ""
+              ? Number(stepValues[field])
+              : (sourceRow?.[field] ?? null)
           return acc
         },
         {} as MeasurementValues
@@ -101,15 +130,11 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
 
       resetLocalState()
       onOpenChange(false)
+      upsertMeasurement(res.data)
 
-      const updated = await getMeasurements()
-      if (!updated.success) {
-        toast.error(updated.message || "Failed to refresh data")
-        return
-      }
-
-      setMeasurements(updated.data)
-      const summary = buildMeasurementPrSummary(updated.data)
+      const summary = buildMeasurementPrSummary(
+        useMeasureStore.getState().measurements
+      )
       const todayPrParts = getPrPartsForDate(summary, today)
 
       if (todayPrParts.length === 0) {

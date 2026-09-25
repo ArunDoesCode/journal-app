@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/journal/journal"
 import { useJournalDraftStore } from "@/lib/store/journalDraftStore"
 import { createClient } from "@/lib/supabase/client"
+import { todayLocalISODate } from "@/lib/utils/date"
 import type { JournalEntry } from "@/types"
 
 function useRecordingTimer() {
@@ -126,7 +127,7 @@ export function JournalComposer({
             data: { user },
           } = await supabase.auth.getUser()
           if (!user) throw new Error("Not authenticated")
-          const today = new Date().toISOString().split("T")[0]
+          const today = todayLocalISODate()
           const url = await uploadAudio(blob, user.id, today, extRef.current)
           setAudioUrl(url)
           toast.success("Audio saved")
@@ -177,7 +178,7 @@ export function JournalComposer({
       const res = isEditing
         ? await updateJournalEntry(existingEntry.id, payload)
         : await insertJournalEntry({
-            date: new Date().toISOString().split("T")[0],
+            date: todayLocalISODate(),
             ...payload,
           })
 

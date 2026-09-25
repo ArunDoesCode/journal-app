@@ -12,6 +12,7 @@ interface MeasureActions {
   setSelectedMetric: (metric: MeasurementField) => void
   setChartRange: (range: ChartRange) => void
   setMeasurements: (measurements: Measurement[]) => void
+  upsertMeasurement: (measurement: Measurement) => void
   clearAll: () => void
 }
 
@@ -28,6 +29,17 @@ export const useMeasureStore = create<MeasureState & MeasureActions>()(
       setSelectedMetric: (metric) => set({ selectedMetric: metric }),
       setChartRange: (range) => set({ chartRange: range }),
       setMeasurements: (measurements) => set({ measurements }),
+      upsertMeasurement: (measurement) =>
+        set((state) => {
+          const rest = state.measurements.filter(
+            (m) => m.date !== measurement.date
+          )
+          return {
+            measurements: [...rest, measurement].sort((a, b) =>
+              b.date.localeCompare(a.date)
+            ),
+          }
+        }),
       clearAll: () => set(initialState),
     }),
     { name: "measure-store" }

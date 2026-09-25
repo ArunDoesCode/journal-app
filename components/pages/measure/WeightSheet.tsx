@@ -10,10 +10,7 @@ import {
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import {
-  getMeasurements,
-  insertWeight,
-} from "@/lib/api/measurements/measurements"
+import { insertWeight } from "@/lib/api/measurements/measurements"
 import { useMeasureStore } from "@/lib/store/measureStore"
 
 interface WeightSheetProps {
@@ -31,7 +28,7 @@ export default function WeightSheet({
 }: WeightSheetProps) {
   const [isPending, startTransition] = useTransition()
   const [weightKg, setWeightKg] = useState("")
-  const { setMeasurements } = useMeasureStore()
+  const { upsertMeasurement } = useMeasureStore()
   const isValidWeight =
     weightKg !== "" && !isNaN(Number(weightKg)) && Number(weightKg) > 0
 
@@ -55,13 +52,7 @@ export default function WeightSheet({
       toast.success("Weight saved")
       setWeightKg("")
       onOpenChange(false)
-
-      const refreshed = await getMeasurements()
-      if (!refreshed.success) {
-        toast.error(refreshed.message || "Failed to refresh data")
-        return
-      }
-      setMeasurements(refreshed.data)
+      upsertMeasurement(result.data)
     })
   }
 
