@@ -8,18 +8,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useMeasureStore } from "@/lib/store/measureStore"
-import { MEASUREMENT_FIELDS, type MeasurementField } from "@/types"
-
-const LABELS: Record<MeasurementField, string> = {
-  neck: "Neck",
-  chest: "Chest",
-  waist: "Waist",
-  hips: "Hips",
-  biceps: "Biceps",
-  forearm: "Forearm",
-  thighs: "Thighs",
-  calves: "Calves",
-}
+import {
+  MEASUREMENT_FIELD_LABELS,
+  MEASUREMENT_FIELDS,
+  type MeasurementField,
+} from "@/types"
 
 export function MetricSelector() {
   const { selectedMetric, setSelectedMetric } = useMeasureStore()
@@ -38,7 +31,7 @@ export function MetricSelector() {
       <SelectContent>
         {MEASUREMENT_FIELDS.map((field) => (
           <SelectItem key={field} value={field}>
-            {LABELS[field]}
+            {MEASUREMENT_FIELD_LABELS[field]}
           </SelectItem>
         ))}
       </SelectContent>

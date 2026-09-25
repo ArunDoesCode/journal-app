@@ -9,5 +9,9 @@ export type {
   MeasurementValues,
   UpsertMeasurementInput,
 } from "./measurements"
-export { CHART_RANGES, MEASUREMENT_FIELDS } from "./measurements"
+export {
+  CHART_RANGES,
+  MEASUREMENT_FIELDS,
+  MEASUREMENT_FIELD_LABELS,
+} from "./measurements"
 export type { JournalEntry } from "./journal"

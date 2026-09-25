@@ -39,14 +39,13 @@ export async function insertMeasurement(
   values: UpsertMeasurementInput
 ): Promise<ApiResponse<Measurement>> {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { success: false, message: "Not authenticated" }
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims.sub
+  if (!userId) return { success: false, message: "Not authenticated" }
 
   const { data, error } = await supabase
     .from("measurements")
-    .upsert({ user_id: user.id, ...values }, { onConflict: "user_id,date" })
+    .upsert({ user_id: userId, ...values }, { onConflict: "user_id,date" })
     .select()
     .single()
 
@@ -59,15 +58,14 @@ export async function insertWeight(
   weightKg: number
 ): Promise<ApiResponse<Measurement>> {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { success: false, message: "Not authenticated" }
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims.sub
+  if (!userId) return { success: false, message: "Not authenticated" }
 
   const { data, error } = await supabase
     .from("measurements")
     .upsert(
-      { user_id: user.id, date: todayLocalISODate(), weight_kg: weightKg },
+      { user_id: userId, date: todayLocalISODate(), weight_kg: weightKg },
       { onConflict: "user_id,date" }
     )
     .select()

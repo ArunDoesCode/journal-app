@@ -38,8 +38,8 @@ A foreign standards doc (`DiecastOS — Next.js Frontend Standards`, from an unr
 app/
   (public)/            route group, no auth required (layout.tsx wraps children only)
     login/page.tsx
-  (protected)/         route group, auth-gated in layout.tsx via Supabase getUser()
-    layout.tsx          checks session, redirects to /login, renders <Providers><main>{children}</main><BottomNav /></Providers>
+  (protected)/         route group, auth enforced by proxy.ts (plus Supabase RLS), not by layout.tsx
+    layout.tsx          plain sync component, no auth check — renders <Providers><main>{children}</main><BottomNav /></Providers>
     journal/page.tsx
     journal/loading.tsx
     measure/page.tsx
@@ -159,7 +159,7 @@ export function MeasureView() {
 }
 ```
 
-`journal/page.tsx` and `profile/page.tsx` follow the identical shell pattern. The auth gate lives one level up in `app/(protected)/layout.tsx`, which redirects to `/login` server-side before any View mounts — pages never re-check auth.
+`journal/page.tsx` and `profile/page.tsx` follow the identical shell pattern. The auth gate lives in `proxy.ts`, which redirects to `/login` before the request reaches `(protected)/layout.tsx` — the layout itself performs no auth check, and pages never re-check auth.
 
 ## 7. State Management
 
@@ -272,8 +272,9 @@ Auth-guarded mutations check for a user first and short-circuit with `success: f
 ```ts
 export async function upsertProfile(values: ProfileUpdateInput): Promise<ApiResponse<Profile>> {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, message: "Not authenticated" }
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims.sub
+  if (!userId) return { success: false, message: "Not authenticated" }
   ...
 }
 ```
@@ -473,7 +474,7 @@ This project is on Next.js **16.2.6**. Conventions that differ from older Next.j
 
 - **`middleware.ts` → `proxy.ts`.** The file at the repo root is `proxy.ts`, exporting a named `proxy` function (not `middleware`), plus the usual `export const config = { matcher: [...] }`. See `proxy.ts` — it runs the Supabase session refresh and the protected/login redirect logic that used to live in `middleware.ts`.
 - **Turbopack is the default bundler.** `next.config.ts` sets `turbopack: {}` and no webpack-specific config is present. **Webpack-based Next plugins silently do nothing** — they are never invoked, the build still succeeds, and the feature is simply absent. This is not theoretical: it is exactly how `next-pwa` produced no service worker for this project.
-- **Async dynamic APIs.** `cookies()`/`headers()` must be awaited. `lib/supabase/server.ts`'s client factory and `app/(protected)/layout.tsx` both `await createClient()` where the server Supabase client wraps `cookies()`. Any new Server Component or Route Handler reading `params`/`searchParams` must treat them as `Promise`s and `await` them.
+- **Async dynamic APIs.** `cookies()`/`headers()` must be awaited. `lib/supabase/server.ts`'s client factory `await createClient()`s where the server Supabase client wraps `cookies()` (`app/(protected)/layout.tsx` no longer does this — it has no auth check and is a plain sync component). Any new Server Component or Route Handler reading `params`/`searchParams` must treat them as `Promise`s and `await` them.
 - **`next lint` is removed.** The `lint` script runs `eslint .` directly (`package.json`), not `next lint`.
 - **PWA: no bundler plugin.** `next.config.ts` wraps nothing. The service worker is built by the Serwist **CLI** in a `postbuild` script (`app/sw.ts` → `public/sw.js`) and registered manually from `components/sw-register.tsx` in production only. Both `next-pwa` and `@serwist/next`'s plugin were tried and produced no worker under Turbopack. See the `pwa-runtime-ux` skill.
 
@@ -481,10 +482,10 @@ This project is on Next.js **16.2.6**. Conventions that differ from older Next.j
 
 There is no ISR, no PPR, and no route in this app fetches data server-side to hydrate a client component with `initialData` — every route is one of two shapes:
 
-| Route                                             | Rendering                                                                                                    | Notes                                                                                           |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `(public)/login`                                  | Server component shell → client `LoginView`                                                                  | Auth redirect happens in `proxy.ts`, not in the page                                            |
-| `(protected)/*` (`journal`, `measure`, `profile`) | Server layout does the auth check (`getUser()`, redirect to `/login`) → thin server `page.tsx` → client View | View fetches its own data client-side after mount (§6); `loading.tsx` covers the gap until then |
+| Route                                             | Rendering                                                                                                                                                                            | Notes                                                                                           |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `(public)/login`                                  | Server component shell → client `LoginView`                                                                                                                                          | Auth redirect happens in `proxy.ts`, not in the page                                            |
+| `(protected)/*` (`journal`, `measure`, `profile`) | `proxy.ts` does the auth check (`getClaims()`, redirect to `/login`) before the request reaches the route → plain sync layout (no auth check) → thin server `page.tsx` → client View | View fetches its own data client-side after mount (§6); `loading.tsx` covers the gap until then |
 
 Do not introduce `initialData`/SSR-fetch-then-hydrate for a route unless you also change the View to accept it as a prop — the current Views take no props and always fetch on mount.
 
@@ -492,9 +493,10 @@ Do not introduce `initialData`/SSR-fetch-then-hydrate for a route unless you als
 
 Two variables, both client-exposed (Supabase RLS is the actual security boundary, not keeping this server-only):
 
-| Variable                               | Scope  | Purpose                                                                                                                       |
-| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`             | Client | Supabase project URL                                                                                                          |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Client | Supabase publishable key (RLS-enforced) — note this project uses the newer `PUBLISHABLE_KEY` naming, not the older `ANON_KEY` |
+| Variable                               | Scope  | Purpose                                                                                                                          |
+| -------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Client | Supabase project URL                                                                                                             |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Client | Supabase publishable key (RLS-enforced) — note this project uses the newer `PUBLISHABLE_KEY` naming, not the older `ANON_KEY`    |
+| `NEXT_PUBLIC_APP_URL`                  | Client | Optional. Base URL for auth redirects; falls back to `window.location.origin` when unset (`components/views/auth/LoginView.tsx`) |
 
-Used in `lib/supabase/client.ts`, `lib/supabase/server.ts`, `proxy.ts`, and `app/layout.tsx`. There is no `NEXT_PUBLIC_API_URL` (no separate backend) and no `SUPABASE_SERVICE_ROLE_KEY` anywhere in the codebase. Values live in `.env.local` only — there is no `.env.example` checked in; if one is added, keep it in sync with these two vars.
+Used in `lib/supabase/client.ts`, `lib/supabase/server.ts`, `proxy.ts`, and `app/layout.tsx`. There is no `NEXT_PUBLIC_API_URL` (no separate backend) and no `SUPABASE_SERVICE_ROLE_KEY` anywhere in the codebase. Values live in `.env.local` only — there is no `.env.example` checked in; if one is added, keep it in sync with these vars.

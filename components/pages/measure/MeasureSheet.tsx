@@ -30,22 +30,12 @@ import {
 } from "@/lib/utils/measurement-pr"
 import { todayLocalISODate } from "@/lib/utils/date"
 import {
+  MEASUREMENT_FIELD_LABELS,
   MEASUREMENT_FIELDS,
   type Measurement,
   type MeasurementField,
   type MeasurementValues,
 } from "@/types"
-
-const LABELS: Record<MeasurementField, string> = {
-  neck: "Neck",
-  chest: "Chest",
-  waist: "Waist",
-  hips: "Hips",
-  biceps: "Biceps",
-  forearm: "Forearm",
-  thighs: "Thighs",
-  calves: "Calves",
-}
 
 const emptyStepValues = (): Record<MeasurementField, string> =>
   Object.fromEntries(MEASUREMENT_FIELDS.map((field) => [field, ""])) as Record<
@@ -142,7 +132,9 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
         return
       }
 
-      const labels = todayPrParts.map((field) => LABELS[field])
+      const labels = todayPrParts.map(
+        (field) => MEASUREMENT_FIELD_LABELS[field]
+      )
       if (labels.length === 1) {
         toast.success(`🏆 New personal record in ${labels[0]}`)
         return
@@ -188,7 +180,7 @@ export function MeasureSheet({ open, onOpenChange }: MeasureSheetProps) {
             <div className="flex items-center justify-between">
               <SheetTitle>
                 Step {currentStep + 1} of {MEASUREMENT_FIELDS.length}:{" "}
-                {LABELS[currentField]}
+                {MEASUREMENT_FIELD_LABELS[currentField]}
               </SheetTitle>
               <AlertDialog>
                 <AlertDialogTrigger asChild>

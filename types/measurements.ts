@@ -14,6 +14,17 @@ export const CHART_RANGES = ["week", "month", "all_time"] as const
 export type MeasurementField = (typeof MEASUREMENT_FIELDS)[number]
 export type ChartRange = (typeof CHART_RANGES)[number]
 
+export const MEASUREMENT_FIELD_LABELS: Record<MeasurementField, string> = {
+  neck: "Neck",
+  chest: "Chest",
+  waist: "Waist",
+  hips: "Hips",
+  biceps: "Biceps",
+  forearm: "Forearm",
+  thighs: "Thighs",
+  calves: "Calves",
+}
+
 export interface Measurement {
   id: string
   user_id: string

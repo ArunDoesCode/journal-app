@@ -34,14 +34,13 @@ export async function upsertProfile(
   values: ProfileUpdateInput
 ): Promise<ApiResponse<Profile>> {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { success: false, message: "Not authenticated" }
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims.sub
+  if (!userId) return { success: false, message: "Not authenticated" }
 
   const { data, error } = await supabase
     .from("profiles")
-    .upsert({ id: user.id, ...values })
+    .upsert({ id: userId, ...values })
     .select()
     .single()
 

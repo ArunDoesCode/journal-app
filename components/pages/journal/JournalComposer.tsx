@@ -123,12 +123,11 @@ export function JournalComposer({
         setUploading(true)
         try {
           const supabase = createClient()
-          const {
-            data: { user },
-          } = await supabase.auth.getUser()
-          if (!user) throw new Error("Not authenticated")
+          const { data: claimsData } = await supabase.auth.getClaims()
+          const userId = claimsData?.claims.sub
+          if (!userId) throw new Error("Not authenticated")
           const today = todayLocalISODate()
-          const url = await uploadAudio(blob, user.id, today, extRef.current)
+          const url = await uploadAudio(blob, userId, today, extRef.current)
           setAudioUrl(url)
           toast.success("Audio saved")
         } catch (err) {
