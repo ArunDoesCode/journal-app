@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { localISODateDaysAgo, todayLocalISODate } from "@/lib/utils/date"
 import type {
   ApiResponse,
   ChartRange,
@@ -24,11 +25,7 @@ export async function getMeasurements(
   let query = supabase.from("measurements").select("*")
 
   if (days !== undefined) {
-    const cutoff = new Date()
-    cutoff.setHours(0, 0, 0, 0)
-    cutoff.setDate(cutoff.getDate() - (days - 1))
-    const cutoffDate = cutoff.toISOString().split("T")[0]
-    query = query.gte("date", cutoffDate)
+    query = query.gte("date", localISODateDaysAgo(days - 1))
   }
 
   const { data, error } = await query.order("date", { ascending: false })
@@ -67,11 +64,10 @@ export async function insertWeight(
   } = await supabase.auth.getUser()
   if (!user) return { success: false, message: "Not authenticated" }
 
-  const today = new Date().toISOString().split("T")[0]
   const { data, error } = await supabase
     .from("measurements")
     .upsert(
-      { user_id: user.id, date: today, weight_kg: weightKg },
+      { user_id: user.id, date: todayLocalISODate(), weight_kg: weightKg },
       { onConflict: "user_id,date" }
     )
     .select()

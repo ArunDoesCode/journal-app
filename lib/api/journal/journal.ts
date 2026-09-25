@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { todayLocalISODate } from "@/lib/utils/date"
 import type { ApiResponse, JournalEntry } from "@/types"
 
 export async function getJournalEntries(): Promise<
@@ -19,7 +20,7 @@ export async function getTodayEntry(): Promise<
   ApiResponse<JournalEntry | null>
 > {
   const supabase = createClient()
-  const today = new Date().toISOString().split("T")[0]
+  const today = todayLocalISODate()
   const { data, error } = await supabase
     .from("journal_entries")
     .select("*")

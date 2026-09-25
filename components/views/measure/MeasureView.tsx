@@ -146,6 +146,7 @@ export function MeasureView() {
           <ChartRangeSelector value={chartRange} onChange={setChartRange} />
           <Button
             onClick={() => setMeasurementSheetOpen(true)}
+            disabled={isPending}
             className="rounded-full shadow-lg"
           >
             Log Measurement
